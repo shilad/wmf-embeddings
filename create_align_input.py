@@ -10,6 +10,9 @@ import re
 import pandas as pd
 import numpy as np
 
+from utils import NP_FLOAT
+
+
 class AlignmentParams:
     def __init__(self, path_in, path_out):
         self.path_in = path_in
@@ -85,7 +88,7 @@ def translate_nav_vectors(path_in, dir_out):
         vectors.append(vector)
 
     if not os.path.isdir(dir_out): os.makedirs(dir_out, exist_ok=True)
-    np.save(os.path.join(dir_out, 'vectors'), np.array(vectors))
+    np.save(os.path.join(dir_out, 'vectors'), np.array(vectors, dtype=NP_FLOAT))
     with open(os.path.join(dir_out, 'ids.txt'), 'w', encoding='utf-8') as f:
         for line in ids:
             f.write(line + '\n')
@@ -116,7 +119,7 @@ def translate_content_vectors(site_links, wiki, path_in, dir_out):
         result_vectors.append(vector)
 
     if not os.path.isdir(dir_out): os.makedirs(dir_out, exist_ok=True)
-    np.save(os.path.join(dir_out, 'vectors'), np.array(result_vectors))
+    np.save(os.path.join(dir_out, 'vectors'), np.array(result_vectors, dtype=NP_FLOAT))
     with open(os.path.join(dir_out, 'ids.txt'), 'w', encoding='utf-8') as f:
         for line in result_ids:
             f.write(line + '\n')
@@ -131,7 +134,7 @@ def read_mikolov_txt(path):
             line = line.rstrip('\n ')
             tokens = line.split(' ')
             id = tokens[0]
-            vector = np.array([float(x) for x in tokens[1:]])
+            vector = np.array([float(x) for x in tokens[1:]], dtype=NP_FLOAT)
             yield(id, vector)
 
 
