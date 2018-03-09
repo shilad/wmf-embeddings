@@ -2,7 +2,7 @@ import logging
 import numpy as np
 import os.path
 
-from utils import LangEmbedding, Titler, read_embeddings, NeighborGraph, wiki_to_project
+from utils import LangEmbedding, Titler, read_embeddings, NeighborGraph, wiki_to_project, nearest_neighbors
 
 NEIGHBOR_WEIGHT = 0.3     # weight of neighbors compared to original vector
 
@@ -17,7 +17,10 @@ def main(path):
         retrofit(epoch, embedding, neighbors, None)
         np.save(path + '/joint_vectors.' + str(epoch) + '.npy', embedding)
 
+
+
 def retrofit(epoch, embedding, neighbors, titler):
+    test(embedding, )
     change = 0.0
     indexes = np.arange(neighbors.num_nodes())
     np.random.shuffle(indexes)

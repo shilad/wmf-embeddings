@@ -41,18 +41,23 @@ class LangEmbedding(object):
         self.index = None   # fast knn index
 
     def submatrix(self, ids):
-        id_to_index = { id: i for (i, id) in enumerate(self.ids) }
         weights = np.zeros(len(ids), dtype=NP_FLOAT)
         sub = np.zeros((len(ids), self.dims()), dtype=NP_FLOAT)
         for i, id in enumerate(ids):
-            if id in id_to_index:
-                index = id_to_index[id]
+            if id in self.ids_to_index:
+                index = self.ids_to_index[id]
                 sub[i, :] = self.embedding[index, :]
                 weights[i] = self.pop[index]
         return weights, sub
 
+    def indexes(self, ids):
+        return [self.ids_to_index[id] for id in ids ]
+
     def dims(self):
         return self.embedding.shape[1]
+
+    def nrows(self):
+        return self.embedding.shape[0]
 
     def build_fast_knn(self):
         index = annoy.AnnoyIndex(self.dims(), metric='angular')
@@ -81,12 +86,15 @@ class LangEmbedding(object):
     def map(self, basis):
         self.embedding.dot(basis, out=self.embedding)
 
-    def neighbors(self, id, n=5, include_distances=False):
+    def neighbors(self, id, n=5, include_distances=False, use_indexes=True):
         assert(self.index)
         if id not in self.ids_to_index: return []
         i = self.ids_to_index[id]
-        ids, dists = self.index.get_nns_by_item(i, n, include_distances=True)
-        result = [self.ids[j] for j in ids]
+        indexes, dists = self.index.get_nns_by_item(i, n, include_distances=True)
+        if use_indexes:
+            result = indexes
+        else:
+            result = [self.ids[j] for j in indexes]
         if include_distances:
             return list(zip(result, dists))
         else:
@@ -127,37 +135,15 @@ class Titler(object):
 
 
 class NeighborGraph(object):
-    def __init__(self, ids, path=None, projs=None, npz_path=None):
+    def __init__(self, ids, path=None):
         self.ids = ids
         self.ids_to_indexes = { id : i for i, id in enumerate(ids) }
         self.path = path
 
         n = len(self.ids)
         if path:
-            with open(path, encoding='utf-8') as f:
-                rows = DynamicArray(dtype='int32')
-                cols = DynamicArray(dtype='int32')
-                for i, line in enumerate(f):
-                    if i % 100000 == 0:
-                        logging.info('reading line %d of neighbor graph %s', i, path)
-                    neighbors = []
-                    for id in line.split('\t'):
-                        id = id.strip()
-                        if id not in self.ids_to_indexes:
-                            continue
-                        if projs and id[:2] != 'c:' and id.split(':')[0] not in projs:
-                            continue
-                        neighbors.append(self.ids_to_indexes[id])
-                    if len(neighbors) >= 2:
-                        src = neighbors[0]
-                        dests = neighbors[1:]
-                        rows.extend(np.repeat(src, len(dests)))
-                        cols.extend(dests)
-            data = np.repeat(True, len(rows))
-            self.graph = csr_matrix((data, (rows, cols)), shape=(n, n), dtype=bool)
-        elif npz_path:
-            logging.info('loading neighbors from %s', npz_path)
-            self.graph = load_npz(npz_path)
+            logging.info('loading neighbors from %s', path)
+            self.graph = load_npz(path)
         else:
             self.graph = csr_matrix((n, n))
 
@@ -175,6 +161,16 @@ class NeighborGraph(object):
     def index_neighbors(self, index):
         row = self.graph[index,:] # row is sparse!
         return row.nonzero()[1]     # columns
+
+    def index_neighbors_and_weights(self, index, n=10):
+        coo = self.graph.getrow(index).tocoo()
+        indexes = np.argsort(coo.data)[:n]
+        # angular distance is sqrt(2 * (1 - cos(u,v)))
+        # we solve for cos below as 1 - ang-dist**2 / 2
+        weights = (1 - coo.data ** 2 / 2)[indexes]
+
+        # As an ad-hoc thing, it's good to make the weights drop off more quickly
+        return coo.col[indexes], weights * weights
 
     def save_npz(self, path):
         save_npz(path, self.graph)
