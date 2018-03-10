@@ -21,9 +21,10 @@ def main(path_in, path_out):
     )
 
     for p in sitelink_paths:
-        sitelinks = pd.read_csv(p)
-        logging.info('read sitelinks %s with %d entries', p, len(sitelinks))
-        break
+        if os.path.isfile(p):
+            sitelinks = pd.read_csv(p)
+            logging.info('read sitelinks %s with %d entries', p, len(sitelinks))
+            break
     else:
         sys.stderr.write('couldnt find sitelinks in %s' % (sitelink_paths, ))
         sys.exit(0)
