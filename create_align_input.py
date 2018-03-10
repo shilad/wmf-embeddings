@@ -13,21 +13,6 @@ from utils import NP_FLOAT
 
 
 def main(path_in, path_out):
-    global sitelinks
-
-    sitelink_paths = (
-        os.path.join(path_in, 'sitelinks.csv'),
-        os.path.join(path_in, 'sitelinks.tsv.bz2')
-    )
-
-    for p in sitelink_paths:
-        if os.path.isfile(p):
-            sitelinks = pd.read_csv(p)
-            logging.info('read sitelinks %s with %d entries', p, len(sitelinks))
-            break
-    else:
-        sys.stderr.write('couldnt find sitelinks in %s' % (sitelink_paths, ))
-        sys.exit(0)
 
     wikis = set()
     ids = set()
@@ -53,6 +38,24 @@ def main(path_in, path_out):
 
     write_titles(sitelinks, ids, os.path.join(path_out, 'titles.csv'), title_lang)
 
+
+def read_sitelinks(path_in):
+    global sitelinks
+
+    path1 = os.path.join(path_in, 'sitelinks.csv')
+    if os.path.isfile(path1):
+        sitelinks = pd.read_csv(path1, encoding='utf-8')
+        logging.info('read sitelinks %s with %d entries', path1, len(sitelinks))
+        return
+
+    path2 = os.path.join(path_in, 'sitelinks.tsv.bz2'),
+    if os.path.isfile(path2):
+        sitelinks = pd.read_csv(path2, delimiter='\t', encoding='utf-8')
+        logging.info('read sitelinks %s with %d entries', path2, len(sitelinks))
+        return
+
+    sys.stderr.write('couldnt find sitelinks in %s or %s!' % (path1, path2))
+    sys.exit(1)
 
 def is_word2vec_model(path):
     """
