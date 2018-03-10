@@ -1,43 +1,84 @@
 #!/usr/bin/python3
-import bz2
-import gzip
 import logging
-import random
-
+import multiprocessing
 import os.path
 import re
+import sys
 
-import pandas as pd
 import numpy as np
+import pandas as pd
+from gensim.models import KeyedVectors
 
 from utils import NP_FLOAT
 
 
-class AlignmentParams:
-    def __init__(self, path_in, path_out):
-        self.path_in = path_in
-        self.path_out = path_out
-        self.title_lang = 'simple.wikipedia'
-        self.path_sitelinks = os.path.join(path_in, 'sitelinks.csv')
+def main(path_in, path_out):
+    global sitelinks
 
-def main(params):
-    sitelinks = pd.read_csv(params.path_sitelinks)
-    logging.info('read sitelinks %s with %d entries', params.path_sitelinks, len(sitelinks))
+    path_sitelinks = os.path.join(path_in, 'sitelinks.csv')
+    sitelinks = pd.read_csv(path_sitelinks)
 
+    logging.info('read sitelinks %s with %d entries', path_sitelinks, len(sitelinks))
+
+    wikis = set()
     ids = set()
-    for fname in os.listdir(params.path_in):
-        parts = fname.split('.')
-        if len(parts) >= 3 and parts[0] == 'vectors' and parts[2] == 'txt':
-            wiki = parts[1]
-            pin = os.path.join(params.path_in, fname)
-            dout = os.path.join(params.path_out, wiki)
-            if wiki == 'nav':
-                new_ids = translate_nav_vectors(pin, dout)
-            else:
-                new_ids = translate_content_vectors(sitelinks, wiki, pin, dout)
-            ids.update(new_ids)
 
-    write_titles(sitelinks, ids, os.path.join(params.path_out, 'titles.csv'), params.title_lang)
+    w2v_paths = [os.path.join(path_in, p) for p in os.listdir(path_in)]
+    w2v_paths = [(p, path_out) for p in w2v_paths if is_word2vec_model(p) ]
+    with multiprocessing.Pool() as pool:
+        for wiki, wiki_ids in pool.imap_unordered(process_w2v, w2v_paths):
+            wikis.add(wiki)
+            if wiki != 'nav':
+                ids.update(wiki_ids)
+
+    if len(wikis) == 1:
+        logging.error('only found wikis %s in %s' % (wikis, path_in))
+        sys.exit(1)
+
+    if 'enwiki' in wikis:
+        title_lang = 'enwiki'
+    elif 'simplewiki' in wikis:
+        title_lang = 'simplewiki'
+    else:
+        title_lang = 'enwiki'
+
+    write_titles(sitelinks, ids, os.path.join(path_out, 'titles.csv'), title_lang)
+
+
+def is_word2vec_model(path):
+    """
+    Checks to see if the path corresponds to a word2vec file.
+    Looks for a filename such as "vectors.enwiki.bin" or "vectors.enwiki.txt.bz2"
+    """
+    if not os.path.isfile(path):
+        return False
+    parts = os.path.basename(path).split('.')
+    if len(parts) not in (3, 4):
+        return False
+    elif len(parts) == 4 and parts[-1].lower() not in ('bz', 'bz2', 'gz'):
+        return False
+    return parts[0] == 'vectors' and parts[2] in ('bin', 'txt')
+
+def process_w2v(paths):
+    global sitelinks
+
+    (path_in, path_out) = paths
+
+    parts = os.path.basename(path_in).split('.')
+    wiki = parts[1]
+    dir_out = os.path.join(path_out, wiki)
+    logging.info('processing word2vec model %s (wiki = %s)', path_in, wiki)
+
+    if not os.path.isdir(dir_out):
+        os.makedirs(dir_out, exist_ok=True)
+
+    if wiki == 'nav':
+        new_ids = translate_nav_vectors(path_in, dir_out)
+    else:
+        new_ids = translate_content_vectors(sitelinks, wiki, path_in, dir_out)
+
+    return (wiki, new_ids)
+
 
 def write_titles(sitelinks, ids, out_path, title_proj):
     # Add placeholders so we know what we care about.
@@ -81,7 +122,7 @@ is_num = re.compile('^\d+$').match
 def translate_nav_vectors(path_in, dir_out):
     ids = []
     vectors = []
-    for id, vector in read_mikolov_txt(path_in):
+    for id, vector in read_word2vec(path_in):
         if is_num(id):
             id = 'c:' + id
         ids.append(id)
@@ -105,7 +146,7 @@ def translate_content_vectors(site_links, wiki, path_in, dir_out):
     result_vectors = []
     rows = 0
 
-    for id, vector in read_mikolov_txt(path_in):
+    for id, vector in read_word2vec(path_in):
         rows += 1
         if id.startswith('t:'):
             page_id = int(id.split(':')[1])
@@ -125,27 +166,21 @@ def translate_content_vectors(site_links, wiki, path_in, dir_out):
             f.write(line + '\n')
     return result_ids
 
-def read_mikolov_txt(path):
-    with open_text_file(path) as f:
-        header = f.readline()
-        for i, line in enumerate(f):
-            if i % 100000 == 0:
-                logging.info("reading line %d of %s" % (i, path))
-            line = line.rstrip('\n ')
-            tokens = line.split(' ')
-            id = tokens[0]
-            vector = np.array([float(x) for x in tokens[1:]], dtype=NP_FLOAT)
-            yield(id, vector)
+def read_word2vec(path):
+    # vectors.enwiki.txt.bz2, vectors.enwiki.bin etc.
+    parts = os.path.basename(path).split('.')
+    assert(parts[2] in ('bin', 'txt'))
 
+    model = KeyedVectors.load_word2vec_format(path,
+                                              datatype=NP_FLOAT,
+                                              encoding='utf-8',
+                                              unicode_errors='ignore',
+                                              binary=(parts[2] == '.bin'))
 
-def open_text_file(path):
-    if path.lower().endswith('bz2') or path.lower().endswith('bz'):
-        return bz2.open(path, 'rt', encoding='utf-8', errors="backslashreplace")
-    elif path.lower().endswith('gz'):
-        return gzip.open(path, 'rt', encoding='utf-8', errors="backslashreplace")
-    else:
-        return open(path, 'r', encoding='utf-8', errors="backslashreplace")
+    for i, id in enumerate(model.index2word):
+        yield (id, model.vectors[i,:])
+
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    main(AlignmentParams('./input', './output'))
+    main('./input', './output')
