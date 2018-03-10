@@ -197,6 +197,10 @@ def project_to_wiki(project):
         return project
 
 
+def max_cores():
+    return min(max(1, os.cpu_count()), 8)
+
+
 def nearest_neighbors(matrix, vector, n):
     v = vector.reshape(1, -1)
     dists = scipy.spatial.distance.cdist(matrix, v, 'cosine').reshape(-1)
