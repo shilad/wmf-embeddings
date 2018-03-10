@@ -15,10 +15,18 @@ from utils import NP_FLOAT
 def main(path_in, path_out):
     global sitelinks
 
-    path_sitelinks = os.path.join(path_in, 'sitelinks.csv')
-    sitelinks = pd.read_csv(path_sitelinks)
+    sitelink_paths = (
+        os.path.join(path_in, 'sitelinks.csv'),
+        os.path.join(path_in, 'sitelinks.tsv.bz2')
+    )
 
-    logging.info('read sitelinks %s with %d entries', path_sitelinks, len(sitelinks))
+    for p in sitelink_paths:
+        sitelinks = pd.read_csv(p)
+        logging.info('read sitelinks %s with %d entries', p, len(sitelinks))
+        break
+    else:
+        sys.stderr.write('couldnt find sitelinks in %s' % (sitelink_paths, ))
+        sys.exit(0)
 
     wikis = set()
     ids = set()
