@@ -1,4 +1,10 @@
 #!/usr/bin/python3
+#
+# Creates input matrices for different languages suitable for numpy
+#
+#
+
+
 import logging
 import multiprocessing
 import os.path
@@ -13,13 +19,14 @@ from utils import NP_FLOAT
 
 
 def main(path_in, path_out):
+    read_sitelinks(path_in)
 
     wikis = set()
     ids = set()
 
     w2v_paths = [os.path.join(path_in, p) for p in os.listdir(path_in)]
     w2v_paths = [(p, path_out) for p in w2v_paths if is_word2vec_model(p) ]
-    with multiprocessing.Pool() as pool:
+    with multiprocessing.Pool(4) as pool:
         for wiki, wiki_ids in pool.imap_unordered(process_w2v, w2v_paths):
             wikis.add(wiki)
             if wiki != 'nav':
@@ -44,13 +51,15 @@ def read_sitelinks(path_in):
 
     path1 = os.path.join(path_in, 'sitelinks.csv')
     if os.path.isfile(path1):
-        sitelinks = pd.read_csv(path1, encoding='utf-8')
+        logging.info('reading sitelinks from %s' % path1)
+        sitelinks = pd.read_csv(path1, encoding='utf-8', error_bad_lines=False)
         logging.info('read sitelinks %s with %d entries', path1, len(sitelinks))
         return
 
-    path2 = os.path.join(path_in, 'sitelinks.tsv.bz2'),
+    path2 = os.path.join(path_in, 'sitelinks.tsv.bz2')
     if os.path.isfile(path2):
-        sitelinks = pd.read_csv(path2, delimiter='\t', encoding='utf-8')
+        logging.info('reading sitelinks from %s' % path2)
+        sitelinks = pd.read_csv(path2, delimiter='\t', encoding='utf-8', error_bad_lines=False)
         logging.info('read sitelinks %s with %d entries', path2, len(sitelinks))
         return
 
@@ -187,7 +196,7 @@ def read_word2vec(path):
                                               datatype=NP_FLOAT,
                                               encoding='utf-8',
                                               unicode_errors='ignore',
-                                              binary=(parts[2] == '.bin'))
+                                              binary=(parts[2] == 'bin'))
 
     for i, id in enumerate(model.index2word):
         yield (id, model.vectors[i,:])
