@@ -7,6 +7,7 @@ import multiprocessing
 import logging
 import os.path
 
+import sys
 from dynarray import DynamicArray
 from scipy.sparse import csr_matrix, save_npz
 
@@ -58,4 +59,6 @@ def make_neighbors(input):
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    main('./output')
+    if len(sys.argv) != 2:
+        sys.stderr.write('usage: %s path/to/dir' % sys.argv[0])
+    main(sys.argv[1])
