@@ -115,17 +115,21 @@ def write_titles(sitelinks, ids, out_path, title_proj):
     rows = []
 
     for index, row in sitelinks.iterrows():
-        proj = wiki_to_project(row['sitelinks.wiki_db'])
-        concept = row['sitelinks.entity'][1:]   # drop 'Q'
-        page_id = str(row['sitelinks.page_id'])
-        title = row['sitelinks.effective_page_title']
+        try:
+            proj = wiki_to_project(row['sitelinks.wiki_db'])
+            concept = row['sitelinks.entity'][1:]   # drop 'Q'
+            page_id = str(row['sitelinks.page_id'])
+            title = row['sitelinks.effective_page_title']
 
-        if proj == title_proj and ('concept', concept) in needed:
-            rows.append(('concept', concept, title))
-            needed.remove(('concept', concept))
-        if (proj, page_id) in needed:
-            rows.append((proj, page_id, title))
-            needed.remove((proj, page_id))
+            if proj == title_proj and ('concept', concept) in needed:
+                rows.append(('concept', concept, title))
+                needed.remove(('concept', concept))
+            if (proj, page_id) in needed:
+                rows.append((proj, page_id, title))
+                needed.remove((proj, page_id))
+        except:
+            logging.exception('Row %s failed', str(row))
+
     df = pd.DataFrame(rows, columns=('project', 'page_id', 'title'))
     df.to_csv(out_path, index=False)
 
