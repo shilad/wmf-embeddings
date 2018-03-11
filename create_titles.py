@@ -15,10 +15,16 @@ import numpy as np
 import pandas as pd
 from gensim.models import KeyedVectors
 
-from utils import NP_FLOAT, wiki_dirs, read_ids, max_cores
+from utils import NP_FLOAT
 
 
-def main(path_in, path_out):
+def main(path):
+
+    ids = {}
+    for p in os.listdir(path):
+        if p.endswith('wiki'):
+            ids = [line.strip() for line in open(os.path.join(path, p), encoding='utf-8')]
+
     read_sitelinks(path_in)
 
     wikis = set()
@@ -26,14 +32,21 @@ def main(path_in, path_out):
 
     w2v_paths = [os.path.join(path_in, p) for p in os.listdir(path_in)]
     w2v_paths = [(p, path_out) for p in w2v_paths if is_word2vec_model(p) ]
-    with multiprocessing.Pool(max_cores()) as pool:
+    with multiprocessing.Pool(4) as pool:
         pool.starmap(process_w2v, w2v_paths)
 
     if len(wikis) == 1:
         logging.error('only found wikis %s in %s' % (wikis, path_in))
         sys.exit(1)
 
-    write_titles(sitelinks, ids, path_out)
+    if 'enwiki' in wikis:
+        title_lang = 'enwiki'
+    elif 'simplewiki' in wikis:
+        title_lang = 'simplewiki'
+    else:
+        title_lang = 'enwiki'
+
+    write_titles(sitelinks, ids, os.path.join(path_out, 'titles.csv'), title_lang)
 
 
 def read_sitelinks(path_in):
@@ -86,30 +99,18 @@ def process_w2v(path_in, path_out):
     else:
         translate_content_vectors(sitelinks, wiki, path_in, dir_out)
 
-def write_titles(sitelinks, ids, out_path):
-    wikis = sitelinks['sitelinks.wiki_db'].unique()
-    if 'enwiki' in wikis:
-        title_proj= 'en.wikipedia'
-    elif 'simplewiki' in wikis:
-        title_proj= 'simple.wikipedia'
-    else:
-        assert(False, 'enwiki and simplewiki not found in %s' % str(wikis))
-
-
-    logging.info('using titles from %s' % title_proj)
-
+def write_titles(sitelinks, ids, out_path, title_proj):
+    # Add placeholders so we know what we care about.
     needed = set()
-    for path in wiki_dirs(out_path):
-        id_path = os.path.join(path, 'ids.txt')
-        for id in read_ids(id_path):
-            if id.startswith('c:'):
-                needed.add(('concept', id[2:]))
-            else:
-                parts = id.split(':')
-                if len(parts) >= 3 and parts[1] == 'p':
-                    needed.add((parts[0], parts[2]))
+    for id in ids:
+        if id.startswith('c:'):
+            needed.add(('concept', id[2:]))
+        else:
+            parts = id.split(':')
+            if len(parts) >= 3 and parts[1] == 'page':
+                needed.add((parts[0], parts[2]))
 
-    titles = {}
+    rows = []
 
     for index, row in sitelinks.iterrows():
         try:
@@ -119,37 +120,16 @@ def write_titles(sitelinks, ids, out_path):
             title = row['sitelinks.effective_page_title']
 
             if proj == title_proj and ('concept', concept) in needed:
-                titles[('concept', concept)] = title
+                rows.append(('concept', concept, title))
+                needed.remove(('concept', concept))
             if (proj, page_id) in needed:
-                titles[(proj, page_id)] = title
+                rows.append((proj, page_id, title))
+                needed.remove((proj, page_id))
         except:
             logging.exception('Row %s failed', str(row))
 
-
-    # Write titles for each language
-    for path in wiki_dirs(out_path):
-        rows = []
-        id_path = os.path.join(path, 'ids.txt')
-        for id in read_ids(id_path):
-            if id.startswith('c:'):
-                proj = 'concept'
-                id = id[2:]
-            else:
-                parts = id.split(':')
-                if len(parts) < 3 or parts[1] != 'p': continue
-                proj = parts[0]
-                id = parts[2]
-            if (proj, id) in titles:
-                rows.append((proj, id, titles[(proj, id)]))
-        df = pd.DataFrame(rows, columns=('project', 'page_id', 'title'))
-        df.to_csv(os.path.join(path, 'titles.csv'), index=False)
-
-    # Write joint titles
-    rows = [(key[0], key[1], val) for (key, val) in titles.items() ]
     df = pd.DataFrame(rows, columns=('project', 'page_id', 'title'))
-    df.to_csv(os.path.join(out_path, 'titles.csv'), index=False)
-
-
+    df.to_csv(out_path, index=False)
 
 def wiki_to_project(wiki):
     if wiki.endswith('wiki'):
@@ -195,7 +175,7 @@ def translate_content_vectors(site_links, wiki, path_in, dir_out):
             if page_id in id_to_entity:
                 id = 'c:' + id_to_entity[page_id][1:]  # drop the 'Q'
             else:
-                id = project + ':p:' + str(page_id)
+                id = project + ':page:' + str(page_id)
         else:
             id = project + ':' + id
         result_ids.append(id)

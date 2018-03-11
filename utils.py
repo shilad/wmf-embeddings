@@ -206,3 +206,20 @@ def nearest_neighbors(matrix, vector, n):
     dists = scipy.spatial.distance.cdist(matrix, v, 'cosine').reshape(-1)
     indexes = np.argsort(dists)
     return indexes.tolist()[:n]
+
+def wiki_dirs(path, include_nav=False):
+    result = []
+
+    for fn in os.listdir(path):
+        full_path = os.path.join(path, fn)
+        if os.path.isdir(full_path):
+            if include_nav and fn == 'nav':
+                result.append(full_path)
+            elif fn.endswith('wiki'):
+                result.append(full_path)
+
+    return result
+
+def read_ids(path):
+    with open(path, encoding='utf-8') as f:
+        return [ line.strip() for line in f ]
