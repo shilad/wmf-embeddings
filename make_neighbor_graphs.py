@@ -11,7 +11,7 @@ import sys
 from dynarray import DynamicArray
 from scipy.sparse import csr_matrix, save_npz
 
-from utils import Titler, LangEmbedding, max_cores
+from utils import Titler, LangEmbedding, max_cores, wiki_dirs
 
 
 def main(dir):
@@ -19,23 +19,15 @@ def main(dir):
 
     titler = Titler(os.path.join(dir, 'titles.csv'))
 
-    lang_infos = []
-    for lang in os.listdir(dir):
-        p = os.path.join(dir, lang)
-        if os.path.isdir(p) and lang.endswith('wiki'):
-            lang_infos.append((lang, p))
-
     with multiprocessing.Pool(max_cores()) as pool:
-        pool.map(make_neighbors, lang_infos)
+        pool.map(make_neighbors, wiki_dirs(dir))
 
-def make_neighbors(input):
+def make_neighbors(path):
     global titler
 
-    print(input)
+    lang = os.path.basename(path)
 
-    (lang, path) = input
-
-    emb = LangEmbedding(lang, path, titler, aligned=True)
+    emb = LangEmbedding(lang, path, titler)
     emb.build_fast_knn()
 
     n = emb.nrows()
@@ -46,7 +38,7 @@ def make_neighbors(input):
     for i, id in enumerate(emb.ids):
         if i % 10000 == 0:
             logging.info('generating neighbors for id %d of %d in %s', i, len(emb.ids), emb.lang)
-        neighbors = emb.neighbors(id, n=50, include_distances=True, use_indexes=True)
+        neighbors = emb.neighbors(id, n=100, include_distances=True, use_indexes=True)
         for (j, dist) in neighbors:
             if j != i:
                 rows.append(i)
@@ -61,4 +53,5 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
     if len(sys.argv) != 2:
         sys.stderr.write('usage: %s path/to/dir' % sys.argv[0])
+        sys.exit(1)
     main(sys.argv[1])
