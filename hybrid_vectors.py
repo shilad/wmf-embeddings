@@ -50,7 +50,7 @@ def main(path, lang):
 
     M = np.concatenate([nav_sub, lang_sub], axis=1)
     logging.info("calcuating SVD of joint %d x %d matrix", M.shape[0], M.shape[1])
-    hybrid = TruncatedSVD(100).fit_transform(M)
+    hybrid = TruncatedSVD(200).fit_transform(M)
 
     # Calculate the alignment between each original matrix and the embedding.
     ortho, scale = scipy.linalg.orthogonal_procrustes(lang_sub, hybrid, check_finite=True)
