@@ -6,6 +6,7 @@ import os.path
 import pandas as pd
 import scipy.linalg
 import scipy.spatial.distance
+import sys
 from sklearn.decomposition import TruncatedSVD
 
 from collections import defaultdict
@@ -37,7 +38,7 @@ NEIGHBOR_WEIGHT = 0.3     # weight of neighbors compared to original vector
 MATCHED_MULTIPLIER = 2    # multiplier for neighbor vectors that match.
 
 def main(path, lang):
-    titler = Titler(os.path.join(path, 'titles.csv'))
+    titler = Titler(os.path.join(path, lang, 'titles.csv'))
 
     # Read in the embeddings
     nav_emb= LangEmbedding('nav', os.path.join(path, 'nav'), titler)
@@ -54,6 +55,7 @@ def main(path, lang):
     # Calculate the alignment between each original matrix and the embedding.
     ortho, scale = scipy.linalg.orthogonal_procrustes(lang_sub, hybrid, check_finite=True)
     aligned = lang_emb.embedding.dot(ortho)
+    np.save(os.path.join(path, lang, 'vectors.aligned'), aligned)
 
     in_indexes = lang_emb.indexes(ids)
     aligned[in_indexes] = hybrid
@@ -63,7 +65,7 @@ def main(path, lang):
     # Retrofit the out of sample points
     show_examples(aligned, lang_emb.ids, titler)
     graph = NeighborGraph(lang_emb.ids, os.path.join(path, lang, 'neighbors.npz'))
-    for epoch in range(10):
+    for epoch in range(20):
         change = 0.0
         for i in out_indexes:
             neighbor_indexes, weights = graph.index_neighbors_and_weights(i, 10)
@@ -74,12 +76,19 @@ def main(path, lang):
                 v1 *= (1.0 - NEIGHBOR_WEIGHT)
                 v1 += NEIGHBOR_WEIGHT * np.average(aligned[neighbor_indexes,:], weights=weights, axis=0)
                 change += np.sum((v1 - v1_orig) ** 2) ** 0.5
-        logging.info('Epoch %d: avg_change=%.4f',
-                     epoch, change / len(out_indexes))
+        mean_change = change / len(out_indexes)
+        logging.info('Epoch %d: avg_change=%.4f', epoch, mean_change)
 
         show_examples(aligned, lang_emb.ids, titler)
+        if mean_change < 0.01:
+            break
+
+    np.save(os.path.join(path, lang, 'vectors.hybrid'), aligned)
 
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
-    main('./output', 'simplewiki')
+    if len(sys.argv) != 3:
+        sys.stderr.write('usage: %s path/to/input lang' % sys.argv[0])
+        sys.exit(1)
+    main(sys.argv[1], sys.argv[2])
