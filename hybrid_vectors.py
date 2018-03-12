@@ -63,7 +63,7 @@ def main(path, lang):
     out_indexes = [i for i in range(lang_emb.nrows()) if i not in in_indexes]
 
     # Retrofit the out of sample points
-    show_examples(aligned, lang_emb.ids, titler)
+    # show_examples(aligned, lang_emb.ids, titler)
     graph = NeighborGraph(lang_emb.ids, os.path.join(path, lang, 'neighbors.npz'))
     for epoch in range(20):
         change = 0.0
@@ -79,7 +79,7 @@ def main(path, lang):
         mean_change = change / len(out_indexes)
         logging.info('Epoch %d: avg_change=%.4f', epoch, mean_change)
 
-        show_examples(aligned, lang_emb.ids, titler)
+        # show_examples(aligned, lang_emb.ids, titler)
         if mean_change < 0.01:
             break
 

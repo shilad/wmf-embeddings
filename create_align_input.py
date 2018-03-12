@@ -35,7 +35,6 @@ def main(path_in, path_out):
 
     write_titles(sitelinks, ids, path_out)
 
-
 def read_sitelinks(path_in):
     global sitelinks
 
@@ -220,7 +219,6 @@ def read_word2vec(path):
 
     for i, id in enumerate(model.index2word):
         yield (id, model.vectors[i,:])
-
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO)
