@@ -165,14 +165,15 @@ def get_wordanalogy_scores(language, word2id, embeddings, lower):
 
     # Compute score for each category
     for cat in queries:
-        qs = torch.from_numpy(np.vstack(queries[cat]))
-        keys = torch.from_numpy(embeddings.T)
-        values = qs.mm(keys).cpu().numpy()
+        qs = np.vstack(queries[cat])
+        keys = embeddings.T
+        values = np.matmul(qs, keys)
 
-    # be sure we do not select input words
+        # be sure we do not select input words
         for i, ws in enumerate(word_ids[cat]):
             for wid in [ws[0], ws[1], ws[3]]:
                 values[i, wid] = -1e9
+
         scores[cat]['n_correct'] = np.sum(values.argmax(axis=1) == [ws[2] for ws in word_ids[cat]])
 
     # pretty print
@@ -243,9 +244,14 @@ if __name__ == '__main__':
     for path in wiki_dirs(sys.argv[1]):
         wiki = os.path.basename(path)
         lang = wiki.replace('wiki', '')
+        if lang == 'simple':
+            lang = 'en'
         if lang not in mono_langs:
             continue
         titler = Titler(os.path.join(path, 'titles.csv'))
         embed = LangEmbedding(lang, path, titler, model_name=sys.argv[2])
         word2id, matrix = embed.dense_words()
+
+        get_wordanalogy_scores(lang, word2id, matrix, True)
+
         get_wordsim_scores(lang, word2id, matrix)
