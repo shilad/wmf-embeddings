@@ -27,14 +27,14 @@ def main(input_path, output_path):
     all = pybloomfilter.BloomFilter(NUM_LABELS, 0.0001)
     dups = pybloomfilter.BloomFilter(NUM_LABELS, 0.0001)
     logging.info('creating bloom filter of %dMBs', all.num_bits / 8 // (1024 * 1024))
-    num_unique = 0
+    num_distinct = 0
     num_dups = 0
 
     input = smart_open.smart_open(input_path, 'rb')
     tmp_output = TemporaryFile(mode='w+', encoding='utf-8')
     for i, line in enumerate(input):
         if i % 10000 == 0:
-            logging.info('processing line %d. %d unique, %d dups', i, num_unique, num_dups)
+            logging.info('processing line %d. %d unique, %d dups', i, num_distinct - num_dups, num_dups)
         try:
             line = line.decode('utf-8').strip()
             if len(line) <= 2: continue # opening or closing
@@ -50,14 +50,14 @@ def main(input_path, output_path):
                 else:
                     result.append(word)
                     all.add(word)
-                    num_unique += 1
+                    num_distinct += 1
             tmp_output.write('\t'.join(result))
             tmp_output.write('\n')
         except:
             sys.stderr.write('error while processing line: %s' % (line))
             traceback.print_exc()
 
-    logging.info('found %d unique, %d dups', num_unique, num_dups)
+    logging.info('found %d unique, %d dups', num_distinct - num_dups, num_dups)
     tmp_output.seek(0)
 
     with open(output_path, 'w', encoding='utf-8') as output:

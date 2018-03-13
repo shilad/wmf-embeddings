@@ -4,6 +4,7 @@ import math
 import numpy as np
 import os.path
 import pandas as pd
+import re
 import scipy.spatial.distance
 
 from scipy.sparse import coo_matrix, csr_matrix, load_npz, save_npz
@@ -15,8 +16,15 @@ NP_FLOAT = 'float32'
 MIN_SIZE = 10000
 
 class LangEmbedding(object):
-    def __init__(self, lang, dir, titles, aligned=False):
+    def __init__(self, lang, dir, titles, aligned=False, model_name=None):
         logging.info('initializing embedding in %s for %s', dir, lang)
+
+        if model_name:
+            pass    # use it
+        elif aligned:
+            model_name = 'vectors.aligned.npy'
+        else:
+            model_name = 'vectors.npy'
 
         self.lang = lang
         self.dir = dir
@@ -28,10 +36,7 @@ class LangEmbedding(object):
                 self.ids.append(line.strip())
         self.ids_to_index = {id: i for i, id in enumerate(self.ids)}
 
-        if aligned:
-            self.vector_path = os.path.join(dir, 'vectors.aligned.npy')
-        else:
-            self.vector_path = os.path.join(dir, 'vectors.npy')
+        self.vector_path = os.path.join(dir, model_name)
 
         self.embedding = np.load(self.vector_path)
         self.embedding /= np.linalg.norm(self.embedding, axis=1)[:,None]    # Unit vectors
@@ -99,6 +104,24 @@ class LangEmbedding(object):
             return list(zip(result, dists))
         else:
             return result
+
+    def dense_words(self):
+        word_to_sparse_index = {}
+        MATCH_WORD = re.compile(r'^.*?\.wikipedia:(.*)$').match
+        for (id, i) in self.ids_to_index.items():
+            m = MATCH_WORD(id)
+            if m:
+                word = m.group(1)
+                word.replace('_', ' ')
+                word_to_sparse_index[word] = i
+
+        sparse_indexes = np.sort(list(word_to_sparse_index.values()))
+        sparse_to_dense = { s : d for d, s in enumerate(sparse_indexes) }
+
+        word_matrix = self.embedding[sparse_indexes, :]
+        word2id = { w : sparse_to_dense[word_to_sparse_index[w]] for w in word_to_sparse_index }
+
+        return word2id, word_matrix
 
 
 def read_embeddings(titler, path, aligned=False):
