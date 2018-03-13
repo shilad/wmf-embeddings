@@ -114,7 +114,8 @@ def get_wordanalogy_scores(language, word2id, embeddings, lower):
     Return (english) word analogy score
     """
     dirpath = os.path.join(MONOLINGUAL_EVAL_PATH, language)
-    if not os.path.isdir(dirpath): return
+    if not os.path.isfile(os.path.join(dirpath, 'questions-words.txt')):
+        return
 
     assert type(lower) is bool
 
