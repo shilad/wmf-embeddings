@@ -230,15 +230,21 @@ def get_crosslingual_wordsim_scores(lang1, word2id1, embeddings1,
 
     return scores
 
+
 if __name__ == '__main__':
     if len(sys.argv) != 3:
         sys.stderr.write('usage: %s embed_dirs embedding\n' % sys.argv[0])
         sys.exit(1)
     logging.basicConfig(level=logging.INFO)
 
+    mono_langs = set(os.listdir(MONOLINGUAL_EVAL_PATH))
+    print(mono_langs)
+
     for path in wiki_dirs(sys.argv[1]):
         wiki = os.path.basename(path)
         lang = wiki.replace('wiki', '')
+        if lang not in mono_langs:
+            continue
         titler = Titler(os.path.join(path, 'titles.csv'))
         embed = LangEmbedding(lang, path, titler, model_name=sys.argv[2])
         word2id, matrix = embed.dense_words()
