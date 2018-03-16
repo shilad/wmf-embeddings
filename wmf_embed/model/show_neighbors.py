@@ -8,7 +8,7 @@ import re
 import requests
 import sys
 
-from embedding import Embedding
+from wmf_embed.model.embedding import Embedding
 
 def is_number(s):
     return all([c in '0123456789' for c in s])

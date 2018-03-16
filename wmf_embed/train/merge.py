@@ -4,7 +4,7 @@ from collections import defaultdict
 import os.path
 import numpy as np
 
-from utils import LangEmbedding, Titler, read_embeddings, NP_FLOAT, NeighborGraph, wiki_to_project
+from wmf_embed.train.utils import Titler, read_embeddings, NP_FLOAT, NeighborGraph, wiki_to_project
 
 
 def main(path):

@@ -6,10 +6,10 @@
 # The script calculates "hit-rates" for session prediction. For session prediction,
 #
 
-import annoy
 import sys
 
-import embedding
+from wmf_embed.model import embedding
+
 if len(sys.argv) != 4:
     sys.stderr.write("usage: %s [path-vector-model.txt] [path-test-data.txt] num-sessions"  % sys.argv[0])
     sys.exit(1)

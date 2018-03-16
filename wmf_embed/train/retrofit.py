@@ -1,8 +1,7 @@
 import logging
 import numpy as np
-import os.path
 
-from utils import LangEmbedding, Titler, read_embeddings, NeighborGraph, wiki_to_project, nearest_neighbors
+from wmf_embed.train.utils import NeighborGraph
 
 NEIGHBOR_WEIGHT = 0.3     # weight of neighbors compared to original vector
 

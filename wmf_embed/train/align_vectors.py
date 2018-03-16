@@ -3,13 +3,12 @@ import logging
 import math
 import numpy as np
 import os.path
-import pandas as pd
 import scipy.linalg
 import scipy.spatial.distance
 
 from collections import defaultdict
 
-from utils import LangEmbedding, Titler, nearest_neighbors, NP_FLOAT
+from wmf_embed.train.utils import LangEmbedding, Titler, nearest_neighbors, NP_FLOAT
 
 SAMPLE_SIZE = 10000
 

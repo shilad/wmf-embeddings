@@ -1,17 +1,13 @@
 
 import logging
-import math
 import numpy as np
 import os.path
-import pandas as pd
 import scipy.linalg
 import scipy.spatial.distance
 import sys
 from sklearn.decomposition import TruncatedSVD
 
-from collections import defaultdict
-
-from utils import LangEmbedding, Titler, nearest_neighbors, NP_FLOAT, NeighborGraph
+from wmf_embed.train.utils import LangEmbedding, Titler, nearest_neighbors, NeighborGraph
 
 SAMPLE_SIZE = 10000
 
