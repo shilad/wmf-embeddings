@@ -6,7 +6,7 @@
 #
 
 from gensim.models.doc2vec import Doc2Vec
-from wmf_embed.train.wikibrain_corpus import WikiBrainCorpus
+from .wikibrain_corpus import WikiBrainCorpus
 
 import logging
 import os
@@ -21,24 +21,24 @@ import sys
 # negative sample = 5, epoch = 20 (30). After removing low frequency words, the 
 # vocabulary size is approximately 670K for WIKI and 300K for AP-NEW.
 #
-def train(corpus):
+def train(args, corpus):
     alpha = 0.025
     min_alpha = 0.0001
-    iters = 20
+    iters = args.iterations
     model = Doc2Vec(
         dm=0,
-        size=300,
-        min_count=20,
+        vector_size=args.size,
+        min_count=args.min_count,
         dbow_words=1,
-        window=15,
-        iter=iters,
+        window=args.window,
+        epochs=args.iterations,
         sample=1e-5,
         hs=0,
-        negative=10,
+        negative=args.negative,
         alpha=alpha, min_alpha=alpha,
-        workers=min(8, os.cpu_count())
+        workers=args.workers
     )
-    sentences = corpus.get_sentences()
+    sentences = list(corpus.get_sentences())
     model.build_vocab(sentences)
     for epoch in range(iters):
         logging.warn("BEGINNING ITERATION %d", epoch)
@@ -52,23 +52,26 @@ def train(corpus):
     model.delete_temporary_training_data()
     return model
 
-def str2bool(v):
-    return v.lower() in ("yes", "true", "t", "1")
-
 if __name__ == '__main__':
+    import argparse
 
-    if len(sys.argv) not in (4, 5):
-        sys.stderr.write('usage: %s corpus_dir min_freq model_output_path [save_as_binary]\n' % sys.argv[0])
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description='Build a fast text vector model from a wikibrain corpus.')
+    parser.add_argument('--iterations',type=int, default=20, help='number of fast text iterations ')
+    parser.add_argument('--size', type=int, default=300, help='size of vectors')
+    parser.add_argument('--min_count', type=int, default=20, help='minimum word frequency')
+    parser.add_argument('--window', type=int, default=15, help='window size')
+    parser.add_argument('--negative', type=int, default=10, help='number of negative samples')
+    parser.add_argument('--workers', type=int, default=min(8, os.cpu_count()), help='number of workers')
+    parser.add_argument('--lower', action='store_true', default=False, help='whether to lowercase words in the corpus')
+    parser.add_argument('--binary', action='store_true', default=False, help='whether to store the model as binary or text')
+    parser.add_argument('--corpus', type=str, required=True, help='corpus directory')
+    parser.add_argument('--output', type=str, required=True, help='vector file')
 
-    binary = False
-    if len(sys.argv) == 5:
-        binary = str2bool(sys.argv[4])
+    args = parser.parse_args()
 
-    (corpus_dir, min_freq, output_path) = sys.argv[1:4]
-    logging.basicConfig(format='%(asctime)s ' + corpus_dir + ': %(message)s', level=logging.INFO)
-    min_freq = int(min_freq)
-    corpus = WikiBrainCorpus(corpus_dir, min_freq=min_freq, lower=True)
-    model = train(corpus)
-    model.save_word2vec_format(output_path, binary=binary)
+    logging.basicConfig(format='%(asctime)s ' + args.corpus + ': %(message)s', level=logging.INFO)
+
+    corpus = WikiBrainCorpus(args.corpus, lower=args.lower, min_freq=args.min_count)
+    model = train(args, corpus)
+    model.save_word2vec_format(args.output, binary=args.binary)
 
