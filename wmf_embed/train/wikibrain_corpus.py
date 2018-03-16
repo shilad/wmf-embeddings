@@ -16,10 +16,10 @@ class WikiBrainCorpus(object):
     """
     def __init__(self, path, lower=False, min_freq=20):
         self.path = path
-        self.freqs = self.read_word_freqs(os.path.join(path, 'dictionary.txt'), min_freq)
-        logging.info('found %d words with min freq %d', len(self.freqs), min_freq)
         self.lower = lower
         self.mention_cache = {}
+        self.freqs = self.read_word_freqs(os.path.join(path, 'dictionary.txt'), min_freq)
+        logging.info('found %d words with min freq %d', len(self.freqs), min_freq)
 
     def get_sentences(self):
         path = os.path.join(self.path, 'corpus.txt')

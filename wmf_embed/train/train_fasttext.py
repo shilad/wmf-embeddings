@@ -95,7 +95,7 @@ if __name__ == '__main__':
     parser.add_argument('--window', type=int, help='window size')
     parser.add_argument('--negative', type=int, help='number of negative samples')
     parser.add_argument('--workers', type=int, help='number of workers')
-    parser.add_argument('--lower', type=bool, default=False, help='whether to lowercase words in the corpus')
+    parser.add_argument('--lower', action='store_true', default=False, help='whether to lowercase words in the corpus')
     parser.add_argument('--corpus', type=str, required=True, help='corpus directory')
     parser.add_argument('--output', type=str, required=True, help='vector file')
 
