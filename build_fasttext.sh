@@ -56,7 +56,7 @@ function do_lang() {
     mkdir -p ./w2v/$lang
     aws s3 cp s3://wikibrain/w2v2/$lang/corpus.txt.bz2 ./w2v/$lang/
     aws s3 cp s3://wikibrain/w2v2/$lang/dictionary.txt.bz2 ./w2v/$lang/
-    python36 -m wmf_embed.train.train_fasttext ./w2v/$lang/ 300 20 ./w2v/$lang/$name $extra_args
+    python36 -m wmf_embed.train.train_fasttext ./w2v/$lang/ 300 20 ./w2v/$lang/$name $extra_args 2>&1 | tee ./w2v/$lang/${name}.log
     pbzip2 ./w2v/$lang/$name
     aws s3 cp ./w2v/$lang/${name}.bz2 s3://wikibrain/w2v2/$lang/
     rm -rf ./w2v/$lang/
