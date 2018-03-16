@@ -1,9 +1,11 @@
 #!/bin/bash
 #
-# Rebuilds word2vec models for a particular language
-# usage: build-fasttext.sh [model-file-name] [lang1,lang2,..]
-#        build-fasttext.sh [model-file-name]
-#        build-fasttext.sh
+# Rebuilds fasttext models models for a particular language
+#
+#  Usage: build_fasttext.sh                     \
+#         [--languages en,de,...]               \
+#         [--name vectors.fasttext.txt]         \
+#         [-- extra arguments to script]
 #
 
 set -e
@@ -53,15 +55,19 @@ function do_lang() {
     shift
     shift
     extra_args=$@
-    mkdir -p ./w2v/$lang
-    aws s3 cp s3://wikibrain/w2v2/$lang/corpus.txt.bz2 ./w2v/$lang/
-    aws s3 cp s3://wikibrain/w2v2/$lang/dictionary.txt.bz2 ./w2v/$lang/
-    python36 -m wmf_embed.train.train_fasttext ./w2v/$lang/ 300 20 ./w2v/$lang/$name $extra_args 2>&1 | tee ./w2v/$lang/${name}.log
-    pbzip2 ./w2v/$lang/$name
-    aws s3 cp ./w2v/$lang/${name}.bz2 s3://wikibrain/w2v2/$lang/
-    rm -rf ./w2v/$lang/
+    path_vecs=./vecs/${name}/${lang}
+    mkdir -p ${path_vecs}
+    aws s3 cp s3://wikibrain/w2v2/$lang/corpus.txt.bz2 ${path_vecs}/
+    aws s3 cp s3://wikibrain/w2v2/$lang/dictionary.txt.bz2 ${path_vecs}/
+    python36 -m wmf_embed.train.train_fasttext \
+                --corpus ${path_vecs}/ \
+                --output ${path_vecs}/$name \
+                $extra_args 2>&1 | tee ${path_vecs}/log.txt
+    pbzip2 ${path_vecs}/$name
+    aws s3 cp ${path_vecs}/${name}.bz2 s3://wikibrain/w2v2/$lang/
+    rm -rf ${path_vecs}/
 }
 
 export -f do_lang
 
-echo $langs | tr ',' '\n' | parallel -j 6 --line-buffer do_lang $name '{}'
+echo $langs | tr ',' '\n' | parallel -j 6 --line-buffer do_lang $name $script_args '{}'
