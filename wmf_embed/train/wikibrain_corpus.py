@@ -55,19 +55,18 @@ class WikiBrainCorpus(object):
         # Tries to match tokens like "Swarnapali:/w/en/53955546/Swarnapali"
         i = token.find(':/w/')
         if i > 0:
-            w = sys.intern(token[:i])
-            cw = self.clean(w)
+            cw = sys.intern(self.clean(token[:i]))
             t = token[i+4:]
             if t not in self.mention_cache and t.count('/') >= 2:
                 (lang, page_id, title) = t.split('/', 2)
                 self.mention_cache [t] = 't:' + page_id + ':' + title
             ct = self.mention_cache[t]
             if ct and bool(random.getrandbits(1)):
-                return [w, ct]
+                return [cw, ct]
             elif ct:
-                return [ct, w]
+                return [ct, cw]
             elif cw in self.freqs:
-                return [sys.intern(cw)]
+                return [cw]
             else:
                 return []
         else:
