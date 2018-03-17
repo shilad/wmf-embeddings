@@ -36,6 +36,7 @@ while [[ $# -gt 0 ]]; do
         ;;
         *)    # unknown option
         echo "
+        Unknown option '$key'
         Usage: [--languages en,de,...]
                [--name vectors.fasttext.txt]
                [-- extra arguments to script]
