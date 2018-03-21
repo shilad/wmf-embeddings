@@ -66,12 +66,16 @@ if __name__ == '__main__':
     parser.add_argument('--binary', action='store_true', default=False, help='whether to store the model as binary or text')
     parser.add_argument('--corpus', type=str, required=True, help='corpus directory')
     parser.add_argument('--output', type=str, required=True, help='vector file')
+    parser.add_argument('--skip_entities', action='store_true', default=False, help='whether to compute vectors for articles as well as words')
 
     args = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)s ' + args.corpus + ': %(message)s', level=logging.INFO)
 
-    corpus = WikiBrainCorpus(args.corpus, lower=args.lower, min_freq=args.min_count)
+    corpus = WikiBrainCorpus(args.corpus,
+                             lower=args.lower,
+                             entities=(not args.skip_entities),
+                             min_freq=args.min_count)
     model = train(args, corpus)
     model.save_word2vec_format(args.output, binary=args.binary)
 

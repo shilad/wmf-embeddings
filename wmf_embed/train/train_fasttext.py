@@ -58,7 +58,6 @@ def train_fasttext(path_corpus, path_vecs, vocab_size, args):
     if vocab_size > 500000:
         bucket_size = 10000000
 
-    # Parameters based on https://arxiv.org/pdf/1802.06893.pdf
     subprocess.run(['./fastText-master/fasttext',
                     'cbow',
                     '-epoch', str(args.iterations),
@@ -79,6 +78,7 @@ def train_fasttext(path_corpus, path_vecs, vocab_size, args):
 if __name__ == '__main__':
     import argparse
 
+    # Parameters based on https://arxiv.org/pdf/1802.06893.pdf
     parser = argparse.ArgumentParser(description='Build a fast text vector model from a wikibrain corpus.')
     parser.add_argument('--iterations',type=int, default=5, help='number of fast text iterations ')
     parser.add_argument('--size', type=int, default=300, help='size of vectors')
@@ -89,12 +89,16 @@ if __name__ == '__main__':
     parser.add_argument('--lower', action='store_true', default=False, help='whether to lowercase words in the corpus')
     parser.add_argument('--corpus', type=str, required=True, help='corpus directory')
     parser.add_argument('--output', type=str, required=True, help='vector file')
+    parser.add_argument('--skip_entities', action='store_true', default=False, help='whether to compute vectors for articles as well as words')
 
     args = parser.parse_args()
 
     logging.basicConfig(format='%(asctime)s ' + args.corpus + ': %(message)s', level=logging.INFO)
 
-    corpus = WikiBrainCorpus(args.corpus, lower=args.lower, min_freq=args.min_count)
+    corpus = WikiBrainCorpus(args.corpus,
+                             lower=args.lower,
+                             entities=(not args.skip_entities),
+                             min_freq=args.min_count)
     vocab_size = write_fasttext(corpus, args.corpus + '/fasttext_corpus.txt')
     train_fasttext(args.corpus + '/fasttext_corpus.txt', args.output, vocab_size, args)
 
