@@ -15,6 +15,7 @@ languages="en,de,simple,ar,az,bg,ca,cs,da,eo,es,et,eu,fa,fi,fr,gl,he,hi,hr,hu,id
 algorithm=fasttext
 name=vectors.fasttext.txt
 script_args=""
+jobs=6
 
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -27,6 +28,11 @@ while [[ $# -gt 0 ]]; do
         ;;
         --name)
         name="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        --jobs)
+        jobs="$2"
         shift # past argument
         shift # past value
         ;;
@@ -50,6 +56,7 @@ while [[ $# -gt 0 ]]; do
         Usage: [--languages en,de,...]
                [--name vectors.fasttext.txt]
                [--algorithm fasttext|doc2vec]
+               [--jobs number of parallel jobs]
                [-- extra arguments to script]
        " >&2
        exit 1
@@ -84,4 +91,4 @@ function do_lang() {
 
 export -f do_lang
 
-echo $languages | tr ',' '\n' | parallel -j 6 --line-buffer do_lang $name '{}' $algorithm $script_args
+echo $languages | tr ',' '\n' | parallel -j ${jobs} --line-buffer do_lang $name '{}' $algorithm $script_args
