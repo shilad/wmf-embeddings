@@ -41,7 +41,7 @@ class WikiBrainCorpus(object):
                 else:
                     tokens = flatten(self.translate_token(t) for t in line.split())
                     labels = []
-                    if article_label and article_line <= 4:
+                    if self.entities and article_label and article_line <= 4:
                         labels = [article_label]
                     yield TaggedDocument(words=tokens, tags=labels)
                     article_line += 1
