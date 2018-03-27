@@ -23,6 +23,13 @@ import traceback
 
 NUM_LABELS = 200 * 10 ** 6  # 200M labels
 
+LOWER = False
+
+def normalize(label):
+    if LOWER:
+        label = label.lower()
+    return label.replace(' ', '_')
+
 def main(input_path, output_path):
     all = pybloomfilter.BloomFilter(NUM_LABELS, 0.0001)
     dups = pybloomfilter.BloomFilter(NUM_LABELS, 0.0001)
@@ -43,7 +50,7 @@ def main(input_path, output_path):
             result = []
             for labels in data['labels'].values():
                 lang = labels['language']
-                word = lang + '.wikipedia:' + labels['value'].lower().replace(' ', '_')
+                word = lang + '.wikipedia:' + normalize(labels['value'])
                 if word in all:
                     dups.add(word)
                     num_dups += 1

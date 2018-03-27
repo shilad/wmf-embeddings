@@ -12,7 +12,9 @@ import numpy as np
 
 from scipy.stats import spearmanr
 
-from wmf_embed.train.utils import Titler, LangEmbedding, wiki_dirs
+from wmf_embed.core.utils import wiki_dirs
+from wmf_embed.core.titler import Titler
+from wmf_embed.core.lang_embedding import LangEmbedding
 
 MONOLINGUAL_EVAL_PATH = 'muse-eval/monolingual'
 SEMEVAL17_EVAL_PATH = 'muse-eval/crosslingual/wordsim'

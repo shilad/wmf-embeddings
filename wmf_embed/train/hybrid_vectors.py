@@ -7,7 +7,10 @@ import scipy.spatial.distance
 import sys
 from sklearn.decomposition import TruncatedSVD
 
-from wmf_embed.train.utils import LangEmbedding, Titler, nearest_neighbors, NeighborGraph
+from wmf_embed.core.utils import nearest_neighbors
+from wmf_embed.train.neighbor_graph import NeighborGraph
+from wmf_embed.core.titler import Titler
+from wmf_embed.core.lang_embedding import LangEmbedding
 
 SAMPLE_SIZE = 10000
 

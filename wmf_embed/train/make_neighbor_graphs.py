@@ -11,7 +11,9 @@ import sys
 from dynarray import DynamicArray
 from scipy.sparse import csr_matrix, save_npz
 
-from wmf_embed.train.utils import Titler, LangEmbedding, max_cores, wiki_dirs
+from wmf_embed.core.utils import max_cores, wiki_dirs
+from wmf_embed.core.titler import Titler
+from wmf_embed.core.lang_embedding import LangEmbedding
 
 
 def main(dir):

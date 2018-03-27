@@ -4,7 +4,9 @@ from collections import defaultdict
 import os.path
 import numpy as np
 
-from wmf_embed.train.utils import Titler, read_embeddings, NP_FLOAT, NeighborGraph, wiki_to_project
+from wmf_embed.core.utils import read_embeddings, NP_FLOAT, wiki_to_project
+from wmf_embed.train.neighbor_graph import NeighborGraph
+from wmf_embed.core.titler import Titler
 
 
 def main(path):

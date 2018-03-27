@@ -15,7 +15,7 @@ import numpy as np
 import pandas as pd
 from gensim.models import KeyedVectors
 
-from wmf_embed.train.utils import NP_FLOAT, wiki_dirs, read_ids, max_cores
+from wmf_embed.core.utils import NP_FLOAT, wiki_dirs, read_ids, max_cores
 
 
 def main(path_in, path_out):

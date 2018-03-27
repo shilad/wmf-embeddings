@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 
-from wmf_embed.train.utils import NeighborGraph
+from wmf_embed.train.neighbor_graph import NeighborGraph
 
 NEIGHBOR_WEIGHT = 0.3     # weight of neighbors compared to original vector
 
