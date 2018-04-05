@@ -58,6 +58,15 @@ done
 echo evaluating model $name for languages $languages with extra args of $script_args >&2
 
 
+# find the right python
+for py_exec in python3-6 python3.6 python3; do
+    if which $py_exec; then
+        break
+    fi
+done
+echo "using python $python"
+export -f $py_exec
+
 function do_lang() {
     name=$1
     lang=$2
@@ -68,7 +77,7 @@ function do_lang() {
     mkdir -p ${path_vecs}
     aws s3 cp s3://wikibrain/w2v2/$lang/${name}.bz2 ${path_vecs}/
     pbunzip2 ${path_vecs}/${name}.bz2
-    python3 -m wmf_embed.model.evaluate_monolingual_embeddings \
+    $py_exec -m wmf_embed.model.evaluate_monolingual_embeddings \
                 --path ${path_vecs}/${name} \
                 --lang ${lang} \
                 $extra_args 2>&1 | tee ${path_vecs}/eval.mono.${name}.txt
