@@ -64,7 +64,7 @@ for py_exec in python3-6 python3.6 python3; do
         break
     fi
 done
-echo "using python $python"
+echo "using python $py_exec"
 export -f $py_exec
 
 function do_lang() {
