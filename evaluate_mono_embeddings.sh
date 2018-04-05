@@ -11,6 +11,10 @@
 set -e
 set -x
 
+if ! [ -d muse-eval/monolingual ]; then
+    (cd muse-eval && ./get_evaluation.sh)
+fi
+
 languages="en,de,simple,es,fa,it"
 algorithm=fasttext
 name=vectors.fasttext.txt
@@ -65,7 +69,7 @@ for py_exec in python3-6 python3.6 python3; do
     fi
 done
 echo "using python $py_exec"
-export -f $py_exec
+export py_exec
 
 function do_lang() {
     name=$1
@@ -81,7 +85,7 @@ function do_lang() {
                 --path ${path_vecs}/${name} \
                 --lang ${lang} \
                 $extra_args 2>&1 | tee ${path_vecs}/eval.mono.${name}.txt
-    aws s3 cp ${path_vecs}/eval.mono..${name}.txt s3://wikibrain/w2v2/$lang/
+    aws s3 cp ${path_vecs}/eval.mono.${name}.txt s3://wikibrain/w2v2/$lang/
     rm -rf ${path_vecs}/
 }
 
@@ -91,5 +95,3 @@ export -f do_lang
 echo $languages |
 tr ',' '\n' |
 parallel -j ${jobs} --line-buffer do_lang $name '{}' $script_args
-'{}'  $script_args
-
