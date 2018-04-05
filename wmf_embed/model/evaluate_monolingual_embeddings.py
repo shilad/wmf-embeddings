@@ -98,13 +98,21 @@ def get_wordsim_scores(language, word2id, embeddings, lower=True):
     logging.info(pattern % ("Dataset", "Found", "Not found", "Rho"))
     logging.info(separator)
 
+    total = [0, 0, 0, 0]
     for filename in list(os.listdir(dirpath)):
         if filename.startswith('%s_' % (language.upper())):
             filepath = os.path.join(dirpath, filename)
             coeff, found, not_found = get_spearman_rho(word2id, embeddings, filepath, lower)
             logging.info(pattern % (filename[:-4], str(found), str(not_found), "%.4f" % coeff))
+            total[0] += found
+            total[1] += not_found
+            total[2] += coeff
+            total[3] += 1
             scores[filename[:-4]] = coeff
+
+    logging.info(pattern % ('OVERALL', str(total[0]), str(total[1]), "%.4f" % (total[2] / total[3])))
     logging.info(separator)
+    logging.info('')
 
     return scores
 
@@ -187,12 +195,21 @@ def get_wordanalogy_scores(language, word2id, embeddings, lower):
     logging.info(separator)
 
     # compute and log accuracies
+    total = [0, 0, 0, 0]
     accuracies = {}
     for k in sorted(scores.keys()):
         v = scores[k]
         accuracies[k] = float(v['n_correct']) / max(v['n_found'], 1)
         logging.info(pattern % (k, str(v['n_found']), str(v['n_not_found']), "%.4f" % accuracies[k]))
+
+        total[0] += v['n_found']
+        total[1] += v['n_not_found']
+        total[2] += accuracies[k]
+        total[3] += 1
+
+    logging.info(pattern % ('OVERALL', str(total[0]), str(total[1]), "%.4f" % (total[2] / total[3])))
     logging.info(separator)
+    logging.info('')
 
     return accuracies
 
