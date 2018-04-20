@@ -237,5 +237,5 @@ if __name__ == '__main__':
     embed = from_mikolov(args.lang, args.path, args.path + '.wmf')
     word2id, matrix = embed.dense_words()
 
-    get_wordanalogy_scores(args.lang, word2id, matrix, args.lower)
     get_wordsim_scores(args.lang, word2id, matrix)
+    get_wordanalogy_scores(args.lang, word2id, matrix, args.lower)
