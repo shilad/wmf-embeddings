@@ -78,17 +78,24 @@ function do_lang() {
     extra_args=$@
     path_vecs=./vecs/${name}/${lang}
     mkdir -p ${path_vecs}
-    aws s3 cp s3://wikibrain/w2v2/$lang/corpus.txt.bz2 ${path_vecs}/
-    aws s3 cp s3://wikibrain/w2v2/$lang/dictionary.txt.bz2 ${path_vecs}/
+    aws s3 cp s3://wikibrain/w2v3/$lang/corpus.txt.bz2 ${path_vecs}/
+    aws s3 cp s3://wikibrain/w2v3/$lang/dictionary.txt.bz2 ${path_vecs}/
     python36 -m wmf_embed.train.train_${algorithm} \
                 --corpus ${path_vecs}/ \
                 --output ${path_vecs}/$name \
                 $extra_args 2>&1 | tee ${path_vecs}/log.txt
     pbzip2 ${path_vecs}/$name
-    aws s3 cp ${path_vecs}/${name}.bz2 s3://wikibrain/w2v2/$lang/
+    aws s3 cp ${path_vecs}/${name}.bz2 s3://wikibrain/w2v3/$lang/
     rm -rf ${path_vecs}/
 }
 
 export -f do_lang
 
-echo $languages | tr ',' '\n' | parallel -j ${jobs} --line-buffer do_lang $name '{}' $algorithm $script_args
+if [[ $languages = *","* ]]; then
+    echo $languages |
+    tr ',' '\n' |
+    parallel -j ${jobs} --line-buffer do_lang $name '{}' $algorithm $script_args
+else
+    do_lang $name $languages $algorithm $script_args
+fi
+

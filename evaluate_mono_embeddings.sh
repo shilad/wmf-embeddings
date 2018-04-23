@@ -79,13 +79,13 @@ function do_lang() {
     extra_args=$@
     path_vecs=./vecs/${name}/${lang}
     mkdir -p ${path_vecs}
-    aws s3 cp s3://wikibrain/w2v2/$lang/${name}.bz2 ${path_vecs}/
+    aws s3 cp s3://wikibrain/w2v3/$lang/${name}.bz2 ${path_vecs}/
     pbunzip2 ${path_vecs}/${name}.bz2
     $py_exec -m wmf_embed.model.evaluate_monolingual_embeddings \
                 --path ${path_vecs}/${name} \
                 --lang ${lang} \
                 $extra_args 2>&1 | tee ${path_vecs}/eval.mono.${name}.txt
-    aws s3 cp ${path_vecs}/eval.mono.${name}.txt s3://wikibrain/w2v2/$lang/
+    aws s3 cp ${path_vecs}/eval.mono.${name}.txt s3://wikibrain/w2v3/$lang/
     rm -rf ${path_vecs}/
 }
 
