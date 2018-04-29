@@ -91,4 +91,10 @@ function do_lang() {
 
 export -f do_lang
 
-echo $languages | tr ',' '\n' | parallel -j ${jobs} --line-buffer do_lang $name '{}' $algorithm $script_args
+if [[ $languages = *","* ]]; then
+    echo $languages |
+    tr ',' '\n' |
+    parallel -j ${jobs} --line-buffer do_lang $name '{}' $algorithm $script_args
+else
+    do_lang $name $languages $algorithm $script_args
+fi
