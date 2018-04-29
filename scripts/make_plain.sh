@@ -10,14 +10,20 @@
 
 set -e
 
+if [ -z "$1" ]; then
+    echo "usage: $0 language" >&2
+    exit 1
+fi
 
-apt-get -yq update &&
-apt-get -yq upgrade &&
-apt-get -yq install unzip zip pigz pbzip2
+
 
 normalize_text() {
-    sed -e "s/’/'/g" -e "s/′/'/g" -e "s/''/ /g" -e "s/'/ ' /g" -e "s/“/\"/g" -e "s/”/\"/g"         -e 's/"/ " /g' -e 's/\./ \. /g' -e 's/<br \/>/ /g' -e 's/, / , /g' -e 's/(/ ( /g' -e 's/)/ ) /g' -e 's/\!/ \! /g'         -e 's/\?/ \? /g' -e 's/\;/ /g' -e 's/\:/ /g' -e 's/-/ - /g' -e 's/=/ /g' -e 's/=/ /g' -e 's/*/ /g' -e 's/|/ /g'         -e 's/«/ /g' | tr 0-9 " "
+    sed -e "s/’/'/g" -e "s/′/'/g" -e "s/''/ /g" -e "s/'/ ' /g" -e "s/“/\"/g" -e "s/”/\"/g" \
+        -e 's/"/ " /g' -e 's/\./ \. /g' -e 's/<br \/>/ /g' -e 's/, / , /g' -e 's/(/ ( /g' -e 's/)/ ) /g' -e 's/\!/ \! /g' \
+        -e 's/\?/ \? /g' -e 's/\;/ /g' -e 's/\:/ /g' -e 's/-/ - /g' -e 's/=/ /g' -e 's/=/ /g' -e 's/*/ /g' -e 's/|/ /g' \
+        -e 's/«/ /g' | tr 0-9 " "
 }
+
 
 export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
@@ -28,10 +34,21 @@ NOW=$(date +"%Y%m%d")
 ROOT="data/wikimedia/${NOW}"
 mkdir -p "${ROOT}"
 echo "Saving data in ""$ROOT"
-LANG=simple
-wget -c "https://dumps.wikimedia.org/""simple""wiki/latest/""${LANG}""wiki-latest-pages-articles.xml.bz2" -P "${ROOT}"
-echo "Processing ""$ROOT"/"simple""wiki-latest-pages-articles.xml.bz2"
-bzip2 -c -d "$ROOT"/"simple""wiki-latest-pages-articles.xml.bz2" | awk '{print tolower($0);}' | perl -e '
+
+if which shuf; then
+    SHUF=shuf
+elif which gshuf; then
+    SHUF=gshuf
+else
+    echo "No shuf or gshuf available" >&2
+    exit 1
+fi
+
+wb_lang=$1
+
+#wget -c "https://dumps.wikimedia.org/""${wb_lang}""wiki/latest/""${wb_lang}""wiki-latest-pages-articles.xml.bz2" -P "${ROOT}"
+echo "Processing ""$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2"
+bzip2 -c -d "$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2" | awk '{print tolower($0);}' | perl -e '
 # Program to filter Wikipedia XML dumps to "clean" text consisting only of lowercase
 # letters (a-z, converted from A-Z), and spaces (never consecutive)...
 # All other characters are converted to spaces.  Only text which normally appears.
@@ -71,8 +88,8 @@ while (<>) {
     print $_;
   }
 }
-' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " | shuf > "${ROOT}"/corpus.plain.txt
+' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " | ${SHUF} > "${ROOT}"/corpus.plain.txt
 
-pbzip2 "${ROOT}"/corpus.plain.txt
-aws s3 cp "${ROOT}"/corpus.plain.txt.bz2 s3://wikibrain/w2v3/simple/
+pbzip2 -f "${ROOT}"/corpus.plain.txt
+aws s3 cp "${ROOT}"/corpus.plain.txt.bz2 s3://wikibrain/w2v3/${wb_lang}/
 
