@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2016-present, Facebook, Inc.
-# All rights reserved.
-#
-# This source code is licensed under the BSD-style license found in the
-# LICENSE file in the root directory of this source tree. An additional grant
-# of patent rights can be found in the PATENTS file in the same directory.
+# Adapted by Shilad Sen from
+# https://github.com/facebookresearch/fastText/blob/master/get-wikimedia.sh
 #
 
 set -e
@@ -35,9 +31,9 @@ ROOT="data/wikimedia/${NOW}"
 mkdir -p "${ROOT}"
 echo "Saving data in ""$ROOT"
 
-if which shuf; then
+if which shuf >&/dev/null; then
     SHUF=shuf
-elif which gshuf; then
+elif which gshuf >&/dev/null; then
     SHUF=gshuf
 else
     echo "No shuf or gshuf available" >&2
@@ -46,7 +42,7 @@ fi
 
 wb_lang=$1
 
-wget -c "https://dumps.wikimedia.org/""${wb_lang}""wiki/latest/""${wb_lang}""wiki-latest-pages-articles.xml.bz2" -P "${ROOT}"
+#wget -c "https://dumps.wikimedia.org/""${wb_lang}""wiki/latest/""${wb_lang}""wiki-latest-pages-articles.xml.bz2" -P "${ROOT}"
 echo "Processing ""$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2"
 bzip2 -c -d "$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2" | awk '{print tolower($0);}' | perl -e '
 # Program to filter Wikipedia XML dumps to "clean" text consisting only of lowercase
@@ -91,11 +87,12 @@ while (<>) {
 ' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " | ${SHUF} > "${ROOT}"/corpus.txt
 
 # Build up dictionary (hack)
-tr ' ' '\n' |
+sed -E -e 's/[[:blank:]]+/\n/g' "${ROOT}"/corpus.txt |
 grep -v '^[ [:punct:]]*$' |
 sort |
 uniq -c |
-sed 's/[ ]*\([0-9][0-9]*\) /w        \1      /' > "${ROOT}"/dictionary.txt
+sed 's/[ ]*\([0-9][0-9]*\) /w	\1	/' |
+grep -v '^w	[0-4]	' > "${ROOT}"/dictionary.txt
 
 pbzip2 -f "${ROOT}"/corpus.txt
 pbzip2 -f "${ROOT}"/dictionary.txt
