@@ -88,8 +88,17 @@ while (<>) {
     print $_;
   }
 }
-' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " | ${SHUF} > "${ROOT}"/corpus.plain.txt
+' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " | ${SHUF} > "${ROOT}"/corpus.txt
 
-pbzip2 -f "${ROOT}"/corpus.plain.txt
-aws s3 cp "${ROOT}"/corpus.plain.txt.bz2 s3://wikibrain/w2v3/${wb_lang}/
+# Build up dictionary (hack)
+tr ' ' '\n' |
+grep -v '^[ [:punct:]]*$' |
+sort |
+uniq -c |
+sed 's/[ ]*\([0-9][0-9]*\) /w        \1      /' > "${ROOT}"/dictionary.txt
+
+pbzip2 -f "${ROOT}"/corpus.txt
+pbzip2 -f "${ROOT}"/dictionary.txt
+aws s3 cp "${ROOT}"/corpus.txt.bz2 s3://wikibrain/w2v3_plain/${wb_lang}/
+aws s3 cp "${ROOT}"/dictionary.txt.bz2 s3://wikibrain/w2v3_plain/${wb_lang}/
 
