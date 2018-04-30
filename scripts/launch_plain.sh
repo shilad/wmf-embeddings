@@ -36,8 +36,6 @@ cat << EOF >.custom_bootstrap.sh
 # of patent rights can be found in the PATENTS file in the same directory.
 #
 
-set -e
-
 
 for i in 0 1 2 3; do
     cd /root
