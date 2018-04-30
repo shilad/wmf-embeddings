@@ -48,7 +48,7 @@ for i in 0 1 2 3; do
     wget https://raw.githubusercontent.com/shilad/wmf-embeddings/master/scripts/make_plain.sh &&
     bash ./make_plain.sh ${wb_lang} ${s3_dir}
 
-    if [ -f base_${wb_lang}/dictionary.txt.b2 ]; then
+    if [ -f base_${wb_lang}/dictionary.txt.bz2 ]; then
         shutdown -h now
         exit 0
     fi
