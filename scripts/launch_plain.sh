@@ -49,7 +49,7 @@ for i in 0 1 2 3; do
     bash ./make_plain.sh ${wb_lang} ${s3_dir}
 
     if [ -f base_${wb_lang}/dictionary.txt.bz2 ]; then
-        #shutdown -h now
+        shutdown -h now
         exit 0
     fi
 done
