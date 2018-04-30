@@ -26,12 +26,13 @@ export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
 
+wb_lang=$1
+s3_dir=$2
+
+
 ROOT="base_${wb_lang}"
 mkdir -p "${ROOT}"
 echo "Saving data in ""$ROOT"
-
-wb_lang=$1
-s3_dir=$2
 
 wget -c "https://dumps.wikimedia.org/""${wb_lang}""wiki/latest/""${wb_lang}""wiki-latest-pages-articles.xml.bz2" -P "${ROOT}" &&
 echo "Processing ""$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2" &&
@@ -65,8 +66,8 @@ while (<>) {
     s/\[\[category:([^|\]]*)[^]]*\]\]/[[$1]]/ig;  # show categories without markup
     s/\[\[[a-z\-]*:[^\]]*\]\]//g;  # remove links to other languages
     s/\[\[[^\|\]]*\|/[[/g;  # remove wiki url, preserve visible text
-    s/{{[^}]*}}//g;         # remove {{icons}} and {tables}
-    s/{[^}]*}//g;
+    s/\{\{[^\}]*\}\}//g;         # remove {{icons}} and {tables}
+    s/\{[^}]*\}//g;
     s/\[//g;                # remove [ and ]
     s/\]//g;
     s/&[^;]*;/ /g;          # remove URL encoded chars
