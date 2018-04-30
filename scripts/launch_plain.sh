@@ -60,12 +60,17 @@ userdata="$(cat .custom_bootstrap.sh | base64 | tr -d '\n' )"
 # Determine parameters for instance type
 
 case $wb_lang in
-    en)
+    en|de|fr)
+        INSTANCE_TYPE=m5.2xlarge
+        STORAGE_GBS=100
+        SPOT_MAX=5.00
+        ;;
+    es|it|ja)
         INSTANCE_TYPE=m5.xlarge
-        STORAGE_GBS=50
+        STORAGE_GBS=40
         SPOT_MAX=1.00
         ;;
-    de|fr|es|it|ja|ru|pl|nl|zh|pt|sr|sv)
+    ru|pl|nl|zh|pt|sr|sv)
         INSTANCE_TYPE=m5.xlarge
         STORAGE_GBS=20
         SPOT_MAX=1.00
