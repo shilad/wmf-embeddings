@@ -11,6 +11,7 @@
 set -e
 set -x
 
+s3_base=s3://wikibrain/w2v3
 languages="en,de,simple,ar,az,bg,ca,cs,da,eo,es,et,eu,fa,fi,fr,gl,he,hi,hr,hu,id,it,ja,kk,ko,lt,ms,nl,nn,no,pl,pt,ro,ru,sk,sl,sr,sv,tr,uk,vi,vo,war,zh"
 algorithm=fasttext
 name=vectors.fasttext.txt
@@ -28,6 +29,11 @@ while [[ $# -gt 0 ]]; do
         ;;
         --name)
         name="$2"
+        shift # past argument
+        shift # past value
+        ;;
+        --s3_base)
+        s3_base="$2"
         shift # past argument
         shift # past value
         ;;
@@ -72,20 +78,22 @@ function do_lang() {
     name=$1
     lang=$2
     algorithm=$3
+    s3_base=$4
+    shift
     shift
     shift
     shift
     extra_args=$@
     path_vecs=./vecs/${name}/${lang}
     mkdir -p ${path_vecs}
-    aws s3 cp s3://wikibrain/w2v3/$lang/corpus.txt.bz2 ${path_vecs}/
-    aws s3 cp s3://wikibrain/w2v3/$lang/dictionary.txt.bz2 ${path_vecs}/
+    aws s3 cp ${s3_base}/$lang/corpus.txt.bz2 ${path_vecs}/
+    aws s3 cp ${s3_base}/$lang/dictionary.txt.bz2 ${path_vecs}/
     python36 -m wmf_embed.train.train_${algorithm} \
                 --corpus ${path_vecs}/ \
                 --output ${path_vecs}/$name \
                 $extra_args 2>&1 | tee ${path_vecs}/log.txt
     pbzip2 ${path_vecs}/$name
-    aws s3 cp ${path_vecs}/${name}.bz2 s3://wikibrain/w2v3/$lang/
+    aws s3 cp ${path_vecs}/${name}.bz2 ${s3_base}/$lang/
     rm -rf ${path_vecs}/
 }
 
@@ -94,8 +102,8 @@ export -f do_lang
 if [[ $languages = *","* ]]; then
     echo $languages |
     tr ',' '\n' |
-    parallel -j ${jobs} --line-buffer do_lang $name '{}' $algorithm $script_args
+    parallel -j ${jobs} --line-buffer do_lang $name '{}' $algorithm ${s3_base} $script_args
 else
-    do_lang $name $languages $algorithm $script_args
+    do_lang $name $languages $algorithm ${s3_base} $script_args
 fi
 
