@@ -83,8 +83,8 @@ sed -E -e 's/[[:blank:]]+/\n/g' "${ROOT}"/corpus.txt |
 grep -v '^[ [:punct:]]*$' |
 sort |
 uniq -c |
-sed 's/[ ]*\([0-9][0-9]*\) /w	\1	/' |
-grep -v '^w	[0-4]	' > "${ROOT}"/dictionary.txt &&
+sed 's/[ ]*\([0-9][0-9]*\) /w \1 /' |
+grep -v '^w [0-4] ' > "${ROOT}"/dictionary.txt &&
 
 pbzip2 -f "${ROOT}"/corpus.txt  &&
 pbzip2 -f "${ROOT}"/dictionary.txt  &&

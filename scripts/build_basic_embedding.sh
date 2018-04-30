@@ -84,11 +84,24 @@ function do_lang() {
     shift
     shift
     extra_args=$@
+
+    PYTHON3=
+    for py3 in python3.6 python36 python3.5 python35 python3; do
+        if which $py3; then
+            PYTHON3=$py3
+            break
+        fi
+    done
+    if [ -z "$PYTHON3" ]; then
+        echo "Couldn't find python3 interpreter!" >&2
+        exit 1
+    fi
+
     path_vecs=./vecs/${name}/${lang}
     mkdir -p ${path_vecs}
     aws s3 cp ${s3_base}/$lang/corpus.txt.bz2 ${path_vecs}/
     aws s3 cp ${s3_base}/$lang/dictionary.txt.bz2 ${path_vecs}/
-    python36 -m wmf_embed.train.train_${algorithm} \
+    $PYTHON3 -m wmf_embed.train.train_${algorithm} \
                 --corpus ${path_vecs}/ \
                 --output ${path_vecs}/$name \
                 $extra_args 2>&1 | tee ${path_vecs}/log.txt
