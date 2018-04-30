@@ -76,7 +76,7 @@ while (<>) {
     print $_;
   }
 }
-' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " | ${SHUF} > "${ROOT}"/corpus.txt &&
+' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " | shuf > "${ROOT}"/corpus.txt &&
 
 # Build up dictionary (hack)
 sed -E -e 's/[[:blank:]]+/\n/g' "${ROOT}"/corpus.txt |
