@@ -25,26 +25,17 @@ export LANGUAGE=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LANG=en_US.UTF-8
 
-NOW=$(date +"%Y%m%d")
 
-ROOT="data/wikimedia/${NOW}"
+ROOT="base_${wb_lang}"
 mkdir -p "${ROOT}"
 echo "Saving data in ""$ROOT"
 
-if which shuf >&/dev/null; then
-    SHUF=shuf
-elif which gshuf >&/dev/null; then
-    SHUF=gshuf
-else
-    echo "No shuf or gshuf available" >&2
-    exit 1
-fi
-
 wb_lang=$1
+s3_dir=$2
 
-wget -c "https://dumps.wikimedia.org/""${wb_lang}""wiki/latest/""${wb_lang}""wiki-latest-pages-articles.xml.bz2" -P "${ROOT}"
-echo "Processing ""$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2"
-bzip2 -c -d "$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2" | awk '{print tolower($0);}' | perl -e '
+wget -c "https://dumps.wikimedia.org/""${wb_lang}""wiki/latest/""${wb_lang}""wiki-latest-pages-articles.xml.bz2" -P "${ROOT}" &&
+echo "Processing ""$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2" &&
+bzip2 -c -d "$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2" | perl -e '
 # Program to filter Wikipedia XML dumps to "clean" text consisting only of lowercase
 # letters (a-z, converted from A-Z), and spaces (never consecutive)...
 # All other characters are converted to spaces.  Only text which normally appears.
@@ -54,11 +45,11 @@ bzip2 -c -d "$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2" | awk '{pri
 # Written by Matt Mahoney, June 10, 2006.  This program is released to the public domain.
 $/=">";                     # input record separator
 while (<>) {
-  if (/<text /) {$text=1;}  # remove all but between <text> ... </text>
+  if (/<text /i) {$text=1;}  # remove all but between <text> ... </text>
   if (/#redirect/i) {$text=0;}  # remove #REDIRECT
   if ($text) {
     # Remove any text not normally visible
-    if (/<\/text>/) {$text=0;}
+    if (/<\/text>/i) {$text=0;}
     s/<.*>//;               # remove xml tags
     s/&amp;/&/g;            # decode URL encoded chars
     s/&lt;/</g;
@@ -84,7 +75,7 @@ while (<>) {
     print $_;
   }
 }
-' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " | ${SHUF} > "${ROOT}"/corpus.txt
+' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " | ${SHUF} > "${ROOT}"/corpus.txt &&
 
 # Build up dictionary (hack)
 sed -E -e 's/[[:blank:]]+/\n/g' "${ROOT}"/corpus.txt |
@@ -92,10 +83,10 @@ grep -v '^[ [:punct:]]*$' |
 sort |
 uniq -c |
 sed 's/[ ]*\([0-9][0-9]*\) /w	\1	/' |
-grep -v '^w	[0-4]	' > "${ROOT}"/dictionary.txt
+grep -v '^w	[0-4]	' > "${ROOT}"/dictionary.txt &&
 
-pbzip2 -f "${ROOT}"/corpus.txt
-pbzip2 -f "${ROOT}"/dictionary.txt
-aws s3 cp "${ROOT}"/corpus.txt.bz2 s3://wikibrain/w2v3_plain/${wb_lang}/
-aws s3 cp "${ROOT}"/dictionary.txt.bz2 s3://wikibrain/w2v3_plain/${wb_lang}/
+pbzip2 -f "${ROOT}"/corpus.txt  &&
+pbzip2 -f "${ROOT}"/dictionary.txt  &&
+aws s3 cp "${ROOT}"/corpus.txt.bz2 ${s3_dir}/${wb_lang}/  &&
+aws s3 cp "${ROOT}"/dictionary.txt.bz2 ${s3_dir}/${wb_lang}/
 
