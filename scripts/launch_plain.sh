@@ -3,13 +3,15 @@
 # Launch remote ec2 execution of WikiBrain corpora.
 #
 
-if [ $# -ne "1" ]; then
-    echo "usage: $0 lang" >&2
+if [ $# -ne "2" ]; then
+    echo "usage: $0 lang s3_dir" >&2
     exit 1
 fi
 
 
 wb_lang=$1
+s3_dir=$2
+shift
 shift
 
 # AWS configuration parameters. These are specific to Shilad's AWS account and should be
@@ -37,11 +39,22 @@ cat << EOF >.custom_bootstrap.sh
 set -e
 
 
-apt-get -yq update &&
-apt-get -yq upgrade &&
-apt-get -yq install unzip zip pigz pbzip2 &&
-wget
+for i in 0 1 2 3; do
+    cd /root
+    apt-get -yq update &&
+    apt-get -yq upgrade &&
+    apt-get -yq install unzip zip pigz pbzip2 &&
+    wget https://bootstrap.pypa.io/get-pip.py &&
+    python3 get-pip.py &&
+    pip3 install cython gensim awscli &&
+    wget https://raw.githubusercontent.com/shilad/wmf-embeddings/master/scripts/make_plain.sh &&
+    bash ./make_plain.sh ${wb_lang} ${s3_dir}
 
+    if [ -f base_${wb_lang}/dictionary.txt.b2 ]; then
+        shutdown -h now
+        exit 0
+    fi
+done
 EOF
 
 userdata="$(cat .custom_bootstrap.sh | base64 | tr -d '\n' )"
