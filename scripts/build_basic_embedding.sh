@@ -45,9 +45,9 @@ while [[ $# -gt 0 ]]; do
         --algorithm)
         algorithm="$2"
         if [ $algorithm != "fasttext" ] && [ $algorithm != "doc2vec" ]; then
-	    echo "unknown algorithm: $algorithm. must be fasttext or doc2vec" >&2
-	    exit 1
-	fi
+            echo "unknown algorithm: $algorithm. must be fasttext or doc2vec" >&2
+            exit 1
+        fi
         shift # past argument
         shift # past value
         ;;
@@ -63,6 +63,7 @@ while [[ $# -gt 0 ]]; do
                [--name vectors.fasttext.txt]
                [--algorithm fasttext|doc2vec]
                [--jobs number of parallel jobs]
+               [--s3_base s3 base directory (defaults to $s3_base) ]
                [-- extra arguments to script]
        " >&2
        exit 1

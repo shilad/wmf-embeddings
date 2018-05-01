@@ -65,12 +65,12 @@ case $wb_lang in
         STORAGE_GBS=100
         SPOT_MAX=5.00
         ;;
-    es|it|ja)
+    es|it|ja|ru|pl)
         INSTANCE_TYPE=m5.xlarge
         STORAGE_GBS=40
         SPOT_MAX=1.00
         ;;
-    ru|pl|nl|zh|pt|sr|sv)
+    nl|zh|pt|sr|sv)
         INSTANCE_TYPE=m5.xlarge
         STORAGE_GBS=20
         SPOT_MAX=1.00

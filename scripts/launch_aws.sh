@@ -1,16 +1,20 @@
 #!/usr/bin/env bash
 #
-# Launch remote ec2 execution of WikiBrain corpora.
+# Launch remote ec2 execution of build_basic_embedding.sh.
+# Extra arguments are passed through to build_basic_embedding.sh
 #
 
-if [ $# -ne "1" ]; then
-    echo "usage: $0 lang arg1 arg2 arg3..." >&2
+if [ $# -lt "2" ]; then
+    echo "usage: $0 wb_lang s3_base arg1 arg2 arg3..." >&2
     exit 1
 fi
 
 
 wb_lang=$1
+s3_base=$2
 shift
+shift
+extra_args=$@
 
 # AWS configuration parameters. These are specific to Shilad's AWS account and should be
 AWS_SUBNET=subnet-18171730
@@ -26,7 +30,6 @@ echo "doing language $wb_lang"
 cat << EOF >.custom_bootstrap.sh
 #!/usr/bin/env bash
 
-set -x
 export DEBIAN_FRONTEND=noninteractive
 
 for i in 0 1 2 3; do
@@ -35,16 +38,16 @@ for i in 0 1 2 3; do
     cd /root &&
     apt-get -yq update &&
     apt-get -yq upgrade &&
-    apt-get -yq install unzip zip pigz pbzip2 &&
+    apt-get -yq install unzip zip pigz pbzip2 g++ make &&
     wget https://bootstrap.pypa.io/get-pip.py &&
     python3 get-pip.py &&
     pip3 install cython gensim awscli &&
 
     # Checkout github
-    git clone https://github.com/shilad/wmf-embeddings.git &&
+    ([ -d wmf-embeddings ] || git clone https://github.com/shilad/wmf-embeddings.git) &&
     cd wmf-embeddings/ &&
-    ./scripts/build_basic_embedding.sh --languages ${wb_lang} #&&
-    # shutdown -h now &&
+    ./scripts/build_basic_embedding.sh --s3_base ${s3_base} --languages ${wb_lang} ${extra_args} &&
+    shutdown -h now &&
     exit 0
 done
 
@@ -56,12 +59,12 @@ userdata="$(cat .custom_bootstrap.sh | base64 | tr -d '\n' )"
 
 case $wb_lang in
     en)
-        INSTANCE_TYPE=m5.4xlarge
+        INSTANCE_TYPE=r4.8xlarge
         STORAGE_GBS=100
         SPOT_MAX=5.00
         ;;
     de|fr|es|it|ja|ru|pl|nl|zh|pt|sr|sv)
-        INSTANCE_TYPE=m5.4xlarge
+        INSTANCE_TYPE=r4.4xlarge
         STORAGE_GBS=50
         SPOT_MAX=5.00
         ;;
