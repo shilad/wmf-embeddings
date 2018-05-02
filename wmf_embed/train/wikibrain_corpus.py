@@ -85,9 +85,13 @@ class WikiBrainCorpus(object):
             for i, line in enumerate(f):
                 if i % 1000000 == 0:
                     logging.info('reading line %d of %s', i, path)
-                (tag, count, word) = line.strip().split(' ')
-                if tag == 'w' and int(count) >= min_freq:
-                    freqs[self.clean(word)] += int(count)
+                tokens = line.strip().split(' ')
+                if len(tokens) == 3:
+                    (tag, count, word) = tokens
+                    if tag == 'w' and int(count) >= min_freq:
+                        freqs[self.clean(word)] += int(count)
+                else:
+                    logging.warning('invalid line: %s', repr(line))
             return freqs
 
 
