@@ -85,6 +85,7 @@ if __name__ == '__main__':
     parser.add_argument('--min_count', type=int, default=20, help='minimum word frequency')
     parser.add_argument('--window', type=int, default=5, help='window size')
     parser.add_argument('--negative', type=int, default=10, help='number of negative samples')
+    parser.add_argument('--doc_lines', type=int, default=4, help='number of corpus lines to treat as pertaining to document')
     parser.add_argument('--workers', type=int, default=min(8, os.cpu_count()), help='number of workers')
     parser.add_argument('--lower', action='store_true', default=False, help='whether to lowercase words in the corpus')
     parser.add_argument('--corpus', type=str, required=True, help='corpus directory')
@@ -98,7 +99,8 @@ if __name__ == '__main__':
     corpus = WikiBrainCorpus(args.corpus,
                              lower=args.lower,
                              entities=(not args.skip_entities),
-                             min_freq=args.min_count)
+                             min_freq=args.min_count,
+                             num_doc_lines=args.num_doc_lines)
     vocab_size = write_fasttext(corpus, args.corpus + '/fasttext_corpus.txt')
     train_fasttext(args.corpus + '/fasttext_corpus.txt', args.output, vocab_size, args)
 

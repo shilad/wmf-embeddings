@@ -14,9 +14,10 @@ class WikiBrainCorpus(object):
     Outputs a corpus of gensim TaggedDocuments
     Mentions of articles appear as t:page_id:Page_Title
     """
-    def __init__(self, path, lower=False, entities=True, min_freq=20):
+    def __init__(self, path, lower=False, entities=True, min_freq=20, num_doc_lines=4):
         self.path = path
         self.entities = entities
+        self.num_doc_lines = num_doc_lines
         self.lower = lower
         self.mention_cache = {}
         self.freqs = self.read_word_freqs(os.path.join(path, 'dictionary.txt'), min_freq)
@@ -41,7 +42,7 @@ class WikiBrainCorpus(object):
                 else:
                     tokens = flatten(self.translate_token(t) for t in line.split())
                     labels = []
-                    if self.entities and article_label and article_line <= 4:
+                    if self.entities and article_label and article_line <= self.num_doc_lines:
                         labels = [article_label]
                     yield TaggedDocument(words=tokens, tags=labels)
                     article_line += 1
