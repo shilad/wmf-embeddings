@@ -100,7 +100,7 @@ if __name__ == '__main__':
                              lower=args.lower,
                              entities=(not args.skip_entities),
                              min_freq=args.min_count,
-                             num_doc_lines=args.num_doc_lines)
+                             num_doc_lines=args.doc_lines)
     vocab_size = write_fasttext(corpus, args.corpus + '/fasttext_corpus.txt')
     train_fasttext(args.corpus + '/fasttext_corpus.txt', args.output, vocab_size, args)
 

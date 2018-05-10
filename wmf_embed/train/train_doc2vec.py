@@ -77,7 +77,7 @@ if __name__ == '__main__':
                              lower=args.lower,
                              entities=(not args.skip_entities),
                              min_freq=args.min_count,
-                             num_doc_lines=args.num_doc_lines)
+                             num_doc_lines=args.doc_lines)
     model = train(args, corpus)
     model.save_word2vec_format(args.output, binary=args.binary)
 
