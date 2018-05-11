@@ -236,6 +236,20 @@ if __name__ == '__main__':
 
     embed = from_mikolov(args.lang, args.path, args.path + '.wmf')
     word2id, matrix = embed.dense_words()
+    if not args.lower:
+        numCaseEqual = 0
+        numWords = 0
+        for w in word2id:
+            if not w.startswith('t:'):
+                numWords += 1
+                if w == w.lower() or w == w.casefold():
+                    numCaseEqual += 1
+        if numCaseEqual / numWords > 0.999:
+            args.lower = True
+            logging.warning('Case folding not requested but applying case folding because '
+                            '%.4f%% of vocabulary is case insensitive.',
+                            100.0 * numCaseEqual / numWords)
+
 
     get_wordsim_scores(args.lang, word2id, matrix)
     get_wordanalogy_scores(args.lang, word2id, matrix, args.lower)

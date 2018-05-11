@@ -6,20 +6,40 @@ import re
 import annoy
 import numpy as np
 from gensim.models import KeyedVectors
+from gensim.utils import to_unicode
+from smart_open import smart_open
 
 from .utils import NP_FLOAT
 
 def from_mikolov(lang, inpath, outpath):
-    v = KeyedVectors.load_word2vec_format(inpath, binary=False)  # C text format
     if not os.path.isdir(outpath): os.makedirs(outpath)
+    enc = 'utf8'
+
+    words = []
+    vectors = []
+
+    with smart_open(inpath) as fin:
+        header = fin.readline()
+
+        while True:
+            line = fin.readline()
+            if line == b'':
+                break
+            parts = to_unicode(line.rstrip(), encoding=enc, errors='ignore').split(" ")
+            word, weights = parts[0], [np.float32(x) for x in parts[1:]]
+            words.append(words)
+            weights.append(np.array(weights))
+
     with open(outpath + '/ids.txt', 'w', encoding='utf-8') as f:
-        for id in v.index2word:
+        for id in words:
             f.write(lang + '.wikipedia:')
             f.write(id)
             f.write('\n')
+
     with open(outpath + '/titles.csv', 'w', encoding='utf-8') as f:
         pass
-    np.save(outpath + '/vectors.npy', np.array(v.vectors))
+
+    np.save(outpath + '/vectors.npy', np.array(vectors))
 
     return LangEmbedding(lang, outpath)
 

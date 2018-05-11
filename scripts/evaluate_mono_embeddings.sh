@@ -18,7 +18,7 @@ fi
 languages="en,de,simple,es,fa,it"
 algorithm=fasttext
 name=vectors.fasttext.txt
-s3_base=w2v3
+s3_base=s3://wikibrain/w2v3
 script_args=""
 jobs=1
 
