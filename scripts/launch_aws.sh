@@ -63,19 +63,19 @@ case $wb_lang in
         STORAGE_GBS=100
         SPOT_MAX=5.00
         ;;
-    de|fr|es|it|ja|ru|pl|nl|zh|pt|sr|sv)
+    de|fr|es|it|ja|ru|pl|nl|zh|pt|sr|sv|uk)
         INSTANCE_TYPE=r4.4xlarge
-        STORAGE_GBS=50
+        STORAGE_GBS=60
         SPOT_MAX=5.00
         ;;
-    vi|ceb|war|uk|ca|no|fi|cs|hu|ko|fa|id|tr|ar)
+    vi|ceb|war|ca|no|fi|cs|hu|ko|fa|id|tr|ar)
         INSTANCE_TYPE=m5.4xlarge
-        STORAGE_GBS=20
+        STORAGE_GBS=40
         SPOT_MAX=5.00
         ;;
     *)
         INSTANCE_TYPE=m5.4xlarge
-        STORAGE_GBS=10
+        STORAGE_GBS=25
         SPOT_MAX=5.00
         ;;
 esac

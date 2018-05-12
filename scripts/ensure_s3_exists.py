@@ -22,9 +22,6 @@ s3_bucket, s3_prefix = s3_base.split('/', 1)
 
 s3 = boto3.client('s3')
 
-# bk = conn.get_bucket('my_bucket_name')
-# key = bk.lookup('my_key_name')
-# print key.size
 
 for lang in LANGS:
     key = os.path.join(s3_prefix, lang, name)
@@ -35,6 +32,4 @@ for lang in LANGS:
     except ClientError:
         print('missing\t' + lang)
 
-    # if not boto3
-    # print(path)
 
