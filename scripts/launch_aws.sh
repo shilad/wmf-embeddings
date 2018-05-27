@@ -37,7 +37,7 @@ for i in 0 1 2 3; do
 # Update, etc.
     cd /root &&
     apt-get -yq update &&
-    apt-get -y -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade &&
+    apt-get -yq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade &&
     apt-get -yq install unzip zip pigz pbzip2 g++ make &&
     wget https://bootstrap.pypa.io/get-pip.py &&
     python3 get-pip.py &&
