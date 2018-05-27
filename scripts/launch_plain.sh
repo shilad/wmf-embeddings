@@ -40,7 +40,7 @@ cat << EOF >.custom_bootstrap.sh
 for i in 0 1 2 3; do
     cd /root
     apt-get -yq update &&
-    apt-get -yq upgrade &&
+    apt-get -yq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" upgrade &&
     apt-get -yq install unzip zip pigz pbzip2 &&
     wget https://bootstrap.pypa.io/get-pip.py &&
     python3 get-pip.py &&
