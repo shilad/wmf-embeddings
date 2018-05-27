@@ -16,7 +16,6 @@ if ! [ -d muse-eval/monolingual ]; then
 fi
 
 languages="en,de,simple,es,fa,it"
-algorithm=fasttext
 name=vectors.fasttext.txt
 s3_base=s3://wikibrain/w2v3
 script_args=""
@@ -98,10 +97,12 @@ function do_lang() {
 export -f do_lang
 
 
-if [[ $languages = *","* ]]; then
+if [[ $languages = *","* ]] && [[ ${jobs} -gt 1 ]]; then
     echo $languages |
     tr ',' '\n' |
     parallel -j ${jobs} --line-buffer do_lang $name '{}' $script_args
 else
-    do_lang $name $languages $script_args
+    for lang in $(echo $languages | tr ', ' ' '); do
+        do_lang $name $lang $script_args
+    done
 fi
