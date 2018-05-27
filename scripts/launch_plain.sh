@@ -36,6 +36,7 @@ cat << EOF >.custom_bootstrap.sh
 # of patent rights can be found in the PATENTS file in the same directory.
 #
 
+export DEBIAN_FRONTEND=noninteractive
 
 for i in 0 1 2 3; do
     cd /root
