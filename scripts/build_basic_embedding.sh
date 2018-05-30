@@ -11,7 +11,7 @@
 set -e
 set -x
 
-s3_base=s3://wikibrain/w2v3
+s3_base=s3://wikibrain/w2v4
 languages="en,de,simple,ar,az,bg,ca,cs,da,eo,es,et,eu,fa,fi,fr,gl,he,hi,hr,hu,id,it,ja,kk,ko,lt,ms,nl,nn,no,pl,pt,ro,ru,sk,sl,sr,sv,tr,uk,vi,vo,war,zh"
 algorithm=fasttext
 name=vectors.fasttext.txt
@@ -108,6 +108,7 @@ function do_lang() {
                 $extra_args 2>&1 | tee ${path_vecs}/log.txt
     pbzip2 ${path_vecs}/$name
     aws s3 cp ${path_vecs}/${name}.bz2 ${s3_base}/$lang/
+    aws s3 cp ${path_vecs}/log.txt ${s3_base}/$lang/${name}.log.txt
     rm -rf ${path_vecs}/
 }
 

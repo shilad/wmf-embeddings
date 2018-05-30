@@ -56,7 +56,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser(description='Build a fast text vector model from a wikibrain corpus.')
-    parser.add_argument('--iterations',type=int, default=20, help='number of fast text iterations ')
+    parser.add_argument('--iterations',type=int, default=10, help='number of fast text iterations ')
     parser.add_argument('--size', type=int, default=300, help='size of vectors')
     parser.add_argument('--min_count', type=int, default=20, help='minimum word frequency')
     parser.add_argument('--window', type=int, default=15, help='window size')
