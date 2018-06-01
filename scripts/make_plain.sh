@@ -98,7 +98,7 @@ while (<>) {
 # Build up dictionary (hack)
 sed -E -e 's/[[:blank:]]+/\n/g' "${ROOT}"/corpus.txt |
 grep -v '^[ [:punct:]]*$' |
-sort |
+sort -S8G |
 uniq -c |
 sed 's/[ ]*\([0-9][0-9]*\) /w \1 /' |
 grep -v '^w [0-4] ' > "${ROOT}"/dictionary.txt &&
