@@ -60,12 +60,12 @@ userdata="$(cat .custom_bootstrap.sh | base64 | tr -d '\n' )"
 case $wb_lang in
     en)
         INSTANCE_TYPE=r4.8xlarge
-        STORAGE_GBS=100
+        STORAGE_GBS=200
         SPOT_MAX=5.00
         ;;
     de|fr|es|it|ja|ru|pl|nl|zh|pt|sr|sv|uk)
         INSTANCE_TYPE=r4.4xlarge
-        STORAGE_GBS=60
+        STORAGE_GBS=80
         SPOT_MAX=5.00
         ;;
     vi|ceb|war|ca|no|fi|cs|hu|ko|fa|id|tr|ar)
