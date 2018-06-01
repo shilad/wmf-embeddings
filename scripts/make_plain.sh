@@ -50,12 +50,13 @@ sub  trim { my $s = shift; $s =~ s/^\s+|\s+$//g; return $s };
 # Written by Matt Mahoney, June 10, 2006.  This program is released to the public domain.
 $/=">";                     # input record separator
 while (<>) {
+  if (/<page /i) {$article_title=""; $article_id=""; }  # reset
   if (/<text /i) {$text=1;}  # remove all but between <text> ... </text>
-    if (!$article_title && /<\/title/i) {
+    if (/<\/title/i) {
     s/<.*>//;               # remove xml tags
     $article_title=$_;
   }
-  if (!$article_id && /<\/id/i) {
+  if (/<\/id/i) {
     s/<.*>//;               # remove xml tags
     $article_id=$_;
   }
