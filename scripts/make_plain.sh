@@ -14,10 +14,11 @@ fi
 
 
 normalize_text() {
-    sed -e "s/’/'/g" -e "s/′/'/g" -e "s/''/ /g" -e "s/'/ ' /g" -e "s/“/\"/g" -e "s/”/\"/g" \
+    sed -e 's/^[ ]*WIKIBRAIN/@WikiBrainDoc/; t' \
+        -e "s/’/'/g" -e "s/′/'/g" -e "s/''/ /g" -e "s/'/ ' /g" -e "s/“/\"/g" -e "s/”/\"/g" \
         -e 's/"/ " /g' -e 's/\./ \. /g' -e 's/<br \/>/ /g' -e 's/, / , /g' -e 's/(/ ( /g' -e 's/)/ ) /g' -e 's/\!/ \! /g' \
         -e 's/\?/ \? /g' -e 's/\;/ /g' -e 's/\:/ /g' -e 's/-/ - /g' -e 's/=/ /g' -e 's/=/ /g' -e 's/*/ /g' -e 's/|/ /g' \
-        -e 's/«/ /g' | tr 0-9 " "
+        -e 's/«/ /g'  -e 's/[0-9]/ /g'
 }
 
 
@@ -31,12 +32,15 @@ s3_dir=$2
 
 
 ROOT="base_${wb_lang}"
-mkdir -p "${ROOT}"
+#mkdir -p "${ROOT}"
 echo "Saving data in ""$ROOT"
 
-wget -c "https://dumps.wikimedia.org/""${wb_lang}""wiki/latest/""${wb_lang}""wiki-latest-pages-articles.xml.bz2" -P "${ROOT}" &&
+#wget -c "https://dumps.wikimedia.org/""${wb_lang}""wiki/latest/""${wb_lang}""wiki-latest-pages-articles.xml.bz2" -P "${ROOT}" &&
 echo "Processing ""$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2" &&
 bzip2 -c -d "$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2" | perl -e '
+
+sub  trim { my $s = shift; $s =~ s/^\s+|\s+$//g; return $s };
+
 # Program to filter Wikipedia XML dumps to "clean" text consisting only of lowercase
 # letters (a-z, converted from A-Z), and spaces (never consecutive)...
 # All other characters are converted to spaces.  Only text which normally appears.
@@ -47,6 +51,14 @@ bzip2 -c -d "$ROOT"/"${wb_lang}""wiki-latest-pages-articles.xml.bz2" | perl -e '
 $/=">";                     # input record separator
 while (<>) {
   if (/<text /i) {$text=1;}  # remove all but between <text> ... </text>
+    if (!$article_title && /<\/title/i) {
+    s/<.*>//;               # remove xml tags
+    $article_title=$_;
+  }
+  if (!$article_id && /<\/id/i) {
+    s/<.*>//;               # remove xml tags
+    $article_id=$_;
+  }
   if (/#redirect/i) {$text=0;}  # remove #REDIRECT
   if ($text) {
     # Remove any text not normally visible
@@ -73,21 +85,26 @@ while (<>) {
     s/&[^;]*;/ /g;          # remove URL encoded chars
     $_=" $_ ";
     chop;
+    if (trim($_) && $article_id) {
+       print "WIKIBRAIN\t$article_id\t$article_title\n";
+       $article_id="";
+       $article_title="";
+    }
     print $_;
   }
 }
-' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " | shuf > "${ROOT}"/corpus.txt &&
+' | normalize_text | awk '{if (NF>1) print;}' | tr -s " " # | shuf > "${ROOT}"/corpus.txt &&
 
 # Build up dictionary (hack)
-sed -E -e 's/[[:blank:]]+/\n/g' "${ROOT}"/corpus.txt |
-grep -v '^[ [:punct:]]*$' |
-sort |
-uniq -c |
-sed 's/[ ]*\([0-9][0-9]*\) /w \1 /' |
-grep -v '^w [0-4] ' > "${ROOT}"/dictionary.txt &&
-
-pbzip2 -f "${ROOT}"/corpus.txt  &&
-pbzip2 -f "${ROOT}"/dictionary.txt  &&
-aws s3 cp "${ROOT}"/corpus.txt.bz2 ${s3_dir}/${wb_lang}/  &&
-aws s3 cp "${ROOT}"/dictionary.txt.bz2 ${s3_dir}/${wb_lang}/
+#sed -E -e 's/[[:blank:]]+/\n/g' "${ROOT}"/corpus.txt |
+#grep -v '^[ [:punct:]]*$' |
+#sort |
+#uniq -c |
+#sed 's/[ ]*\([0-9][0-9]*\) /w \1 /' |
+#grep -v '^w [0-4] ' > "${ROOT}"/dictionary.txt &&
+#
+#pbzip2 -f "${ROOT}"/corpus.txt  &&
+#pbzip2 -f "${ROOT}"/dictionary.txt  &&
+#aws s3 cp "${ROOT}"/corpus.txt.bz2 ${s3_dir}/${wb_lang}/  &&
+#aws s3 cp "${ROOT}"/dictionary.txt.bz2 ${s3_dir}/${wb_lang}/
 
